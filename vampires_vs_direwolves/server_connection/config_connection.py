@@ -2,5 +2,5 @@
 
 CONFIG = dict(
     port=5555,
-    host="127.0.0.8",
+    host="127.0.0.1",
 )

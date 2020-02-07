@@ -4,7 +4,7 @@ import logging
 import os
 
 
-DEFAULT_CONSOLE_LEVEL = logging.DEBUG
+DEFAULT_CONSOLE_LEVEL = logging.INFO
 
 
 def _initialize_logger(output_dir):
@@ -21,14 +21,14 @@ def _initialize_logger(output_dir):
     # create error file handler and set level to error
     handler = logging.FileHandler(os.path.join(output_dir, "error.log"), "w", encoding=None, delay=True)
     handler.setLevel(logging.ERROR)
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(module)s %(funcName)s %(lineno)d - %(message)s")
     handler.setFormatter(formatter)
     _logger.addHandler(handler)
 
     # create info file handler and set level to info
     handler = logging.FileHandler(os.path.join(output_dir, "info.log"), "w", encoding=None, delay=True)
     handler.setLevel(logging.INFO)
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(module)s %(funcName)s %(lineno)d - %(message)s")
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
     _logger.addHandler(handler)
 
