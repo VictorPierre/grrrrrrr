@@ -2,25 +2,29 @@
 # programming in Python
 import socket  # for socket
 import sys
-from config_connection import host, host_ip
+from server_connection.config_connection import port, host_ip
 
-try:
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print("Socket successfully created")
-except socket.error as err:
-    print("socket creation failed with error %s" % err)
 
-try:
-    host_ip = socket.gethostbyname(host_ip)
-except socket.gaierror:
+def connect():
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print("Socket successfully created")
+    except socket.error as err:
+        print("socket creation failed with error %s" % err)
+        return
+    try:
+        host = socket.gethostbyname(host_ip)
+    except socket.gaierror as err:
+        # this means could not resolve the host
+        print("there was an error resolving the host")
+        print(err)
+        return
 
-    # this means could not resolve the host
-    print ("there was an error resolving the host")
-    sys.exit()
+    # connecting to the server
+    sock.connect((host, port))
+    return sock
 
-# connecting to the server
-s.connect((host_ip, host))
 
-print
-"the socket has successfully connected to host %s \
-on port == %s" % (host_ip, host)
+if __name__ == '__main__':
+    sock = connect()
+    print(f"the socket has successfully connected to host {host_ip} on port {port}")
