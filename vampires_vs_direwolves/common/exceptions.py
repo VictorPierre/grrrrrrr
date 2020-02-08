@@ -12,3 +12,8 @@ class MapCorruptedException(BaseGameException):
 class SpeciesExtinctionException(BaseGameException):
     """No more movement possible because species is extinct"""
     pass
+
+
+class GameProtocolException(BaseGameException):
+    """Command conventions not respected"""
+    pass
