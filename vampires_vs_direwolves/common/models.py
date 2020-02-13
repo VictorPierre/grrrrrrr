@@ -4,6 +4,7 @@ import numpy as np
 from typing import Tuple
 
 from common.exceptions import MapCorruptedException
+from common.logger import logger
 
 
 class DataType(enum.Enum):
@@ -30,9 +31,16 @@ class Species(enum.Enum):
     @classmethod
     def from_cell_to_species_and_number(cls, cell: Tuple[int, int, int]):
         non_zero_indexes = np.nonzero(cell)
-        if len(non_zero_indexes) > 1:
-            raise MapCorruptedException(f"More than one species in one cell ({cell})!")
-        return (Species(non_zero_indexes[0]), cell[non_zero_indexes[0]]) if non_zero_indexes else (Species(3), 0)
+        if len(non_zero_indexes) != 1:
+            err_msg = f"numpy.nonzero(cell) should be a tuple of length 1, found {non_zero_indexes} instead!"
+            logger.error(err_msg)
+            raise MapCorruptedException(err_msg)
+        species_index = non_zero_indexes[0]
+        if len(species_index) > 1:
+            err_msg = f"More than one species in one cell ({cell})!"
+            logger.error(err_msg)
+            raise MapCorruptedException(err_msg)
+        return (Species(species_index[0]), cell[species_index[0]]) if len(species_index) else (Species(3), 0)
 
     @classmethod
     def from_cell(cls, cell: Tuple[int, int, int]):
