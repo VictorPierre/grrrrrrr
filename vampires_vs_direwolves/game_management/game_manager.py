@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 import time
+from collections import defaultdict
 from threading import Thread
-from typing import List, Tuple, Optional, Type
+from typing import List, Optional, Tuple, Type
 
 from boutchou.abstract_ai import AbstractAI
 from boutchou.boutchou_ai import Boutchou
 from boutchou.default_ai import DefaultAI
+from boutchou.human_ai import HumanAi
 from common.exceptions import GameProtocolException
 from common.logger import logger
-from game_management.abstract_game_map import AbstractGameMap
-from server_connection.client import Client
-from game_management.game_map import GameMap
 from common.models import Command, DataType, Species
-from collections import defaultdict
+from game_management.abstract_game_map import AbstractGameMap
+from game_management.game_map import GameMap
+from server_connection.client import Client
 
 
 class GameManager:
@@ -54,7 +55,8 @@ class GameManager:
             assert 0 <= movement[3] < self._map.m  # 0 <= x < nb_columns
             assert 0 <= movement[4] < self._map.n  # 0 <= y < nb_lines
             # rule n°2
-            assert self._map.get_cell_species((movement[0], movement[1])) is self._species
+            assert self._map.get_cell_species(
+                (movement[0], movement[1])) is self._species
             # rule n°4
             assert -1 <= movement[0] - movement[3] <= 1
             assert -1 <= movement[1] - movement[4] <= 1
@@ -128,7 +130,8 @@ class GameManager:
         new_movements = self._ai.generate_move()
         self.move(new_movements)  # MOV
         t1 = time.time()
-        logger.info(f"{self._name}: Sent our moves to server in {t1 - t0}s: {new_movements}")
+        logger.info(
+            f"{self._name}: Sent our moves to server in {t1 - t0}s: {new_movements}")
 
     def map(self):
         self._update()
@@ -175,7 +178,8 @@ class GameManager:
         elif command is Command.BYE:
             return None
         else:
-            raise GameProtocolException(f"At the end of a game, server should send SET or BYE, got {command}")
+            raise GameProtocolException(
+                f"At the end of a game, server should send SET or BYE, got {command}")
 
     def start(self):
         is_connected = self._client.connect()
@@ -186,8 +190,10 @@ class GameManager:
 
 
 if __name__ == '__main__':
-    player1 = Thread(target=GameManager(player_name="Boutchou", ai_class=DefaultAI).start)
-    player2 = Thread(target=GameManager(player_name="Boss", ai_class=DefaultAI).start)
+    player1 = Thread(target=GameManager(
+        player_name="Boutchou", ai_class=DefaultAI).start)
+    player2 = Thread(target=GameManager(
+        player_name="Boss", ai_class=DefaultAI).start)
     player1.start()
     player2.start()
     player1.join()

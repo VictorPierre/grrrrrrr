@@ -2,7 +2,10 @@
 # using Python 3.6+
 import sys
 
+from boutchou.human_ai import HumanAi
+
 user_args = sys.argv[1:]
+human = False
 
 
 def print_help(return_value=0):
@@ -17,6 +20,9 @@ if "--help" in user_args:
 if not user_args:
     print("No arguments set. Using default configuration for server...")
     server_config = None
+elif "--human" in user_args:
+    human = True
+
 else:
     try:
         server_config = {"host": user_args[0], "port": int(user_args[1])}
@@ -27,8 +33,9 @@ else:
 
 def main():
     from game_management.game_manager import GameManager
-
-    game_manager = GameManager(server_config=server_config)
+    hum = HumanAi
+    game_manager = GameManager(server_config=server_config) if not human \
+        else GameManager(server_config=None, ai_class=hum)
     game_manager.start()
 
     print("End of program")
