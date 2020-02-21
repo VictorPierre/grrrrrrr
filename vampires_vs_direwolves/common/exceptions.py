@@ -14,6 +14,28 @@ class SpeciesExtinctionException(BaseGameException):
     pass
 
 
+class IncorrectSpeciesException(BaseGameException):
+    """Invalid species for the current action"""
+    pass
+
+
 class GameProtocolException(BaseGameException):
     """Command conventions not respected"""
+    pass
+
+
+class IncorrectCommandException(BaseGameException):
+    """Invalid command name"""
+    pass
+
+
+class TooMuchConnections(Exception):
+    pass
+
+
+class PlayerCheatedException(Exception):
+    pass
+
+
+class PlayerTimeoutError(Exception):
     pass

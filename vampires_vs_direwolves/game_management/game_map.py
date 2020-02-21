@@ -4,16 +4,16 @@ from typing import List, Tuple, Union
 import numpy as np
 
 from common.logger import logger
-from common.models import Species
-from game_management.abstract_game_map import AbstractGameMap
+from common.models import Species, Singleton
+from game_management.abstract_game_map import AbstractGameMap, AbstractGameMapWithVisualizer
 
 
 class GameMap(AbstractGameMap):
     """Game map storage is a numpy array: [[[number of humans, number of vampires, number of werewolves], ...], ...]
     and three other numpy arrays of each character: [[number of persons, ...], ...]
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._human_map = None
         self._vampire_map = None
         self._werewolf_map = None
@@ -72,6 +72,12 @@ class GameMap(AbstractGameMap):
             self._vampire_map[x, y] = update[3]
             self._werewolf_map[x, y] = update[4]
         logger.debug("Game map updated")
+        super().update(ls_updates)
 
     def show_map(self):
         print(self._map_table)
+
+
+class ServerGameMap(GameMap, AbstractGameMapWithVisualizer):
+    def __init__(self, show_map=True):
+        super().__init__(show_map=show_map)
