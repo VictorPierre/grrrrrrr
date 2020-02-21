@@ -7,6 +7,7 @@ from common.models import Species
 
 class AbstractGameMap(ABC):
     """Abstract class defining the methods to describe a game map"""
+
     def __init__(self):
         self._n: int = 0  # number of lines
         self._m: int = 0  # number of columns
@@ -29,6 +30,45 @@ class AbstractGameMap(ABC):
         An update tuple has the following format: (position_x, position_y, nb humans, nb vampires, nb werewolves)
         """
         pass
+
+    @staticmethod
+    def _get_move_range(coord: int, max_coord: int) -> Tuple[int, int]:
+        """Get the range of possible moves for a coordinate x or y."""
+        if coord + 1 == max_coord:
+            range_coord = (-1, 1)
+        elif coord == 0:
+            range_coord = (0, 2)
+        else:
+            range_coord = (-1, 2)
+        return range_coord
+
+    def get_possible_moves(self, position: Tuple[int, int], force_move: bool = False) -> List[Tuple[int, int]]:
+        """Return the list of possible moves from a position.
+
+        If force_move, (x,y) is not returned in te list of possibilities.
+        """
+        x, y = position
+        range_x = self._get_move_range(x, self.m)
+        range_y = self._get_move_range(y, self.n)
+        positions_set = set()
+        for shift_x in range(*range_x):
+            for shift_y in range(*range_y):
+                positions_set.add((x + shift_x, y + shift_y))
+        if force_move:
+            positions_set.difference_update({position})
+        assert 4 - int(force_move) <= len(positions_set) <= 9 - int(force_move)
+        return list(positions_set)
+
+    @property
+    def positions(self):
+        """Generator of positions
+
+        >>> for x, y in self.positions:
+        >>>     print(x, y)
+        """
+        for x in range(self._m):
+            for y in range(self._n):
+                yield x, y
 
     @abstractmethod
     def get_cell_species(self, position: Tuple[int, int]) -> Species:
