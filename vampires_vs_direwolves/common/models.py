@@ -66,7 +66,8 @@ class Species(enum.Enum):
 
     def to_cell(self, position: Tuple[int, int], number: int) -> Tuple[int, int, int, int, int]:
         cell = [*position, 0, 0, 0]
-        cell[2 + self.value] = number
+        if self is not Species.NONE:
+            cell[2 + self.value] = number
         return tuple(cell)
 
     @classmethod
