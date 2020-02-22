@@ -6,6 +6,7 @@ from threading import Thread
 from time import sleep
 from typing import List, Tuple
 
+from battle_computer.battle_computer import BattleComputer
 from common.logger import logger
 
 from common.exceptions import TooMuchConnections, PlayerCheatedException, PlayerTimeoutError, IncorrectCommandException
@@ -129,17 +130,12 @@ class GameServerManager:
 
     @staticmethod
     def fight(species_1, number_1, species_2, number_2):
-        if species_2 is Species.NONE:
-            return species_1, number_1
-        if species_2 is Species.HUMAN:  # TODO
-            return species_1, number_1
-        return species_1, number_1  # TODO
+        return BattleComputer((species_1, number_1), (species_2, number_2)).compute_one_battle_result()
 
     def update_game_map(self, movements: List[Tuple[int, int, int, int, int, int]], species: Species):
         ls_updates = []
         for old_x, old_y, nb_move, new_x, new_y in movements:
             update1 = (old_x, old_y, 0, 0, 0)
-            # todo: battle computation
             target_species, target_nb = self._game_map.get_cell_species_and_number((new_x, new_y))
             res_species, res_nb = self.fight(species, nb_move, target_species, target_nb)
             update2 = res_species.to_cell((new_x, new_y), res_nb)

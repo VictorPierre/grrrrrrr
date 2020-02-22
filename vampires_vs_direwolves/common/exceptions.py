@@ -29,6 +29,11 @@ class IncorrectCommandException(BaseGameException):
     pass
 
 
+class InvalidBattleException(BaseGameException):
+    """Invalid species in a battle"""
+    pass
+
+
 class TooMuchConnections(Exception):
     pass
 
