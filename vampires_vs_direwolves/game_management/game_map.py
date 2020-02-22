@@ -12,6 +12,7 @@ class GameMap(AbstractGameMap):
     """Game map storage is a numpy array: [[[number of humans, number of vampires, number of werewolves], ...], ...]
     and three other numpy arrays of each character: [[number of persons, ...], ...]
     """
+
     def __init__(self):
         super().__init__()
         self._human_map = None
@@ -75,3 +76,7 @@ class GameMap(AbstractGameMap):
 
     def show_map(self):
         print(self._map_table)
+
+
+def compute_new_board(map: AbstractGameMap, move: Tuple[int, int, int, int, int]) -> AbstractGameMap:
+    pass
