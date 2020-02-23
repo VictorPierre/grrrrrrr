@@ -113,7 +113,6 @@ class GameManager:
 
     def map(self):
         self._update()
-        self._map.show_map()
         logger.info(f"{self._name}: The map has been loaded!")
         self._species = self._map.get_cell_species(self._initial_position)
         self._ai.load_species(self._species)
@@ -155,8 +154,8 @@ class GameManager:
             try:
                 self.start_game()  # NME
                 self._play()
-            except (ConnectionResetError, ConnectionAbortedError, ConnectionRefusedError) as err:
-                logger.error(f"Connection reset: {err}")
+            except (ConnectionResetError, ConnectionAbortedError, ConnectionRefusedError, TimeoutError) as err:
+                logger.error(f"Connection error: {err}")
                 logger.exception(err)
         logger.debug(f"{self._name}: GameManager closing...")
 

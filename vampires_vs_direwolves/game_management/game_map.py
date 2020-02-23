@@ -14,15 +14,8 @@ class GameMap(AbstractGameMap):
     and three other numpy arrays of each character: [[number of persons, ...], ...]
     """
 
-
-<< << << < HEAD
-
     def __init__(self):
         super().__init__()
-== == == =
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
->>>>>> > d1529464f1ad7f3f496f525b407645e4562da213
         self._human_map = None
         self._vampire_map = None
         self._werewolf_map = None
@@ -83,13 +76,11 @@ class GameMap(AbstractGameMap):
         logger.debug("Game map updated")
         super().update(ls_updates)
 
-    def show_map(self):
-        print(self._map_table)
-
 
 def compute_new_board(map: AbstractGameMap, move: Tuple[int, int, int, int, int]) -> AbstractGameMap:
     pass
 
+
 class ServerGameMap(GameMap, AbstractGameMapWithVisualizer):
-    def __init__(self, show_map=True):
-        super().__init__(show_map=show_map)
+    def __init__(self):
+        super().__init__()

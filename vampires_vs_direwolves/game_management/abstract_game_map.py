@@ -10,11 +10,10 @@ from game_management.map_viewer import MapViewer
 class AbstractGameMap(ABC):
     """Abstract class defining the methods to describe a game map"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         self._n: int = 0  # number of lines
         self._m: int = 0  # number of columns
         self._map_table = None  # map storage
-        self._show_map = kwargs.get("show_map", False)
 
     @abstractmethod
     def load_map(self, n: int, m: int):
@@ -93,24 +92,19 @@ class AbstractGameMap(ABC):
         """Given a species, returns the list of positions where this species lives"""
         pass
 
-    @abstractmethod
-    def show_map(self):
-        """Show the game map. Format is not specified."""
-        pass
-
     def close(self):
         pass
 
 
 class AbstractGameMapWithVisualizer(AbstractGameMap, ABC):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._map_viewer: MapViewer = MapViewer(show_map=self.show_map)  # map visualizer
+    def __init__(self):
+        super().__init__()
+        self._map_viewer: MapViewer = MapViewer()  # map visualizer
 
     @abstractmethod
     def load_map(self, n: int, m: int):
         super().load_map(n, m)
-        self._map_viewer.load_map_viewer(self)
+        self._map_viewer.load(self)
 
     @abstractmethod
     def update(self, ls_updates: List[Tuple[int, int, int, int, int]]):
@@ -118,11 +112,7 @@ class AbstractGameMapWithVisualizer(AbstractGameMap, ABC):
         An update tuple has the following format: (position_x, position_y, nb humans, nb vampires, nb werewolves)
         """
         super().update(ls_updates)
-        try:
-            self._map_viewer.update(ls_updates)
-        except RuntimeError as err:
-            logger.warning(f"Map viewer exception: {err}")
-            logger.exception(err)
+        self._map_viewer.update(ls_updates)
 
     def close(self):
-        self._map_viewer.quit()
+        self._map_viewer.close()

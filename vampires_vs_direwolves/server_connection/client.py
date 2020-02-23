@@ -36,7 +36,8 @@ class Client(AbstractServer):
         ServerCommunication.send(self._sock, *args)
 
     def receive(self, nb_bytes: int = 3, expected_type: DataType = DataType.STR):
-        return ServerCommunication.receive(self._sock, nb_bytes=nb_bytes, expected_type=expected_type)
+        return ServerCommunication.receive(self._sock, nb_bytes=nb_bytes,
+                                           expected_type=expected_type, timeout=self.timeout)
 
     def receive_int(self):
-        return ServerCommunication.receive_int(self._sock)
+        return ServerCommunication.receive_int(self._sock, timeout=self.timeout)

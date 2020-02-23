@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import select
 import socket
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from time import time, sleep
 from typing import Union, Tuple
 
@@ -86,7 +86,7 @@ class ServerCommunication:
         return msg_int
 
 
-class AbstractServer:
+class AbstractServer(ABC):
     def __init__(self, config: dict = None):
         # noinspection PyTypeChecker
         self._sock: socket.socket = None
@@ -104,6 +104,10 @@ class AbstractServer:
     @property
     def auto_reload(self):
         return self._config.get("auto_reload", 0)
+
+    @property
+    def timeout(self):
+        return self._config.get("timeout", 5)
 
     @abstractmethod
     def _connect(self):
@@ -124,3 +128,14 @@ class AbstractServer:
         self._is_active = False
         if self._sock:
             self._sock.close()
+
+
+class AbstractWorker(ABC):
+    @property
+    @abstractmethod
+    def is_active(self):
+        return False
+
+    @abstractmethod
+    def add(self, connection: socket.socket):
+        pass
