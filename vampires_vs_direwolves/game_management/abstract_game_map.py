@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Generator
 
 from common.logger import logger
 from common.models import Species
@@ -88,9 +88,22 @@ class AbstractGameMap(ABC):
         pass
 
     @abstractmethod
+    def species_position_generator(self, species: Species) -> Generator:
+        pass
+
     def find_species_position(self, species: Species) -> List[Tuple[int, int]]:
         """Given a species, returns the list of positions where this species lives"""
+        species_positions = list(self.species_position_generator(species))
+        logger.debug(f"Positions of {species.name}: {species_positions}")
+        return species_positions
+
+    @abstractmethod
+    def species_position_and_number_generator(self, species: Species) -> Generator:
         pass
+
+    def find_species_position_and_number(self, species: Species) -> List[Tuple[Tuple[int, int], int]]:
+        """Given a species, returns the list of positions and number where this species lives"""
+        return list(self.species_position_and_number_generator(species))
 
     def close(self):
         pass

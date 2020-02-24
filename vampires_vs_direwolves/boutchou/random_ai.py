@@ -4,6 +4,7 @@ from time import sleep
 from typing import Tuple
 
 from boutchou.abstract_ai import AbstractAI
+from boutchou.rules import NextMoveRule
 from common.logger import logger
 from common.exceptions import SpeciesExtinctionException
 
@@ -14,9 +15,7 @@ class RandomAI(AbstractAI):
     """Random AI with no split, for tests"""
 
     def _random_move(self, initial_position: Tuple[int, int]) -> Tuple[int, int]:
-        possible_moves = self._map.get_possible_moves(initial_position, force_move=True)
-        rand_ind = randint(0, len(possible_moves) - 1)
-        new_pos = possible_moves[rand_ind]
+        new_pos = NextMoveRule(self._map).random_move(initial_position)
         logger.debug(f"New position computed: {new_pos}")
         return new_pos
 
