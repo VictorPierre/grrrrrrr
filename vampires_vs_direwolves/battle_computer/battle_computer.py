@@ -105,6 +105,8 @@ class BattleComputer:
         if self.defender_specie is Species.NONE:
             return self.attacker_specie, self.attacker_count
         if self.proba_attacker_wins == 1:
+            if self.defender_specie is Species.HUMAN:
+                return self.attacker_specie, self.attacker_count + self.defender_count
             return self.attacker_specie, self.attacker_count
         # Non trivial battles
         victory = np.random.binomial(n=1, p=self.proba_attacker_wins)
