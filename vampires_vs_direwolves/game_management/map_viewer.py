@@ -54,6 +54,15 @@ class CustomTk(tk.Tk):
 
 
 class MapViewer(AbstractMapViewer, metaclass=Singleton):
+    """
+
+    Usage:
+
+    >>> MapViewer().set_visible()  # must be in main thread
+    >>> # Start a worker thread
+    >>> MapViewer().mainloop()  # blocking until the window is closed
+    >>> # Join the worker thread
+    """
     def __init__(self, height=500, width=500):
         self._is_visible = False  # False means the map viewer is totally inactive
         self._is_active = None  # True when the window is ok, False on error or if it is not loaded
@@ -152,7 +161,7 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
 
     @if_is_visible_only
     def load(self, game_map: 'AbstractGameMapWithVisualizer'):
-        if self._is_active and self._game_map is not None:  # map already loaded
+        if self._is_active and self._game_map is not None:  # map already loaded and viewer active
             self._update()
             logger.info("Map viewer reloaded!")
         else:

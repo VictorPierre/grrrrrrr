@@ -21,11 +21,11 @@ class GameMap(AbstractGameMap):
         self._werewolf_map = None
 
     def load_map(self, n: int, m: int):
-        super().load_map(n, m)
         self._map_table = np.zeros((n, m, 3), int)
         self._human_map = np.zeros((n, m), int)
         self._vampire_map = np.zeros((n, m), int)
         self._werewolf_map = np.zeros((n, m), int)
+        super().load_map(n, m)
 
     def get_species_map(self, species: Species):
         if species is Species.HUMAN:
