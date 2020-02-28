@@ -4,7 +4,7 @@ from common.models import Species
 from game_management.abstract_game_map import AbstractGameMap
 
 
-class Abstract_Heuristic(ABC):
+class AbstractHeuristic(ABC):
 
     @abstractmethod
     def evaluate(self, game_map: AbstractGameMap, specie: Species):
