@@ -105,6 +105,11 @@ class AbstractGameMap(ABC):
         """Given a species, returns the list of positions and number where this species lives"""
         return list(self.species_position_and_number_generator(species))
 
+    @property
+    def is_game_over(self) -> bool:
+        return bool(len(self.find_species_position(Species.VAMPIRE))
+                    * len(self.find_species_position(Species.WEREWOLF)))
+
     def close(self):
         pass
 

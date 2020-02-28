@@ -69,6 +69,12 @@ class GameMap(AbstractGameMap):
         for i, j in zip(non_zero_tab[0], non_zero_tab[1]):
             yield (j, i), table[i, j]
 
+    @property
+    def is_game_over(self) -> bool:
+        # faster implementation than AbstractGameMap
+        return bool(len(np.nonzero(self._get_species_map(Species.WEREWOLF))[0])
+                    * len(np.nonzero(self._get_species_map(Species.VAMPIRE))[0]))
+
     def update(self, ls_updates: List[Tuple[int, int, int, int, int]]):
         for update in ls_updates:
             x, y = update[1], update[0]
