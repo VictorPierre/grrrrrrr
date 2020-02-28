@@ -144,6 +144,7 @@ class GameManager:
         if command is Command.SET:
             return self._play()
         elif command is Command.BYE:
+            self._client.stop()
             return None
         else:
             raise GameProtocolException(f"At the end of a game, server should send SET or BYE, got {command}")
