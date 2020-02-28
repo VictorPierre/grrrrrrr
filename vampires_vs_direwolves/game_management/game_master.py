@@ -24,9 +24,16 @@ except Exception as _err:
 
 
 class GameMonitor:
+    """Class to record game details"""
     def __init__(self):
-        self._game_counter = []
-        self._all_games = [self._game_counter]
+        self._server_config = None
+        self._game_parameters = None
+
+        self._game_counter = None
+        self._players = None
+        self._game_details = None
+        self._all_games = []
+        self.reset()
 
     @staticmethod
     def _get_summary(ls):
@@ -43,15 +50,40 @@ class GameMonitor:
     def __len__(self):
         return len(self._game_counter)
 
-    def append(self, winning_species: Species):
+    def add_server_config(self, **kwargs):
+        self._server_config = kwargs
+
+    def add_game(self, **kwargs):
+        self._game_parameters = kwargs
+
+    def add_player(self, name, species):
+        self._players.append(dict(name=name, species=species))
+
+    def append(self, winning_species: Species, starting_species: Species, nb_rounds: int):
         self._game_counter.append(winning_species)
+        self._game_details.append({"starting_species": starting_species,
+                                   "nb_rounds": nb_rounds,
+                                   "winner": winning_species})
 
     def reset(self):
         self._game_counter = []
-        self._all_games.append(self._game_counter)
+        self._players = []
+        self._game_details = []
+        self._all_games.append({"players": self._players, "results": self._game_counter, "details": self._game_details})
+
+    def __str__(self):
+        res = f"Game monitor (server: {self._server_config}):\n" \
+              f"Game map: {self._game_parameters}\n"
+        for i, game in enumerate(self._all_games):
+            res += f"Game set #{i} summary: Players: {game['players']}\n" \
+                   f"Results: {self._get_summary(game['results'])}\n" \
+                   f"Details: {game['details']}\n"""
+        return res
 
 
 class GameMasterWorker(AbstractWorker):
+    """Game master including a server"""
+
     def __init__(self, nb_players: int, max_rounds: int, max_nb_games: int, auto_restart: int = 0):
         self._nb_players = nb_players
         self._max_rounds = max_rounds
@@ -97,6 +129,7 @@ class GameMasterWorker(AbstractWorker):
         n = ServerCommunication.receive_int(connexion)
         name = ServerCommunication.receive(connexion, nb_bytes=n, expected_type=DataType.STR)
         self._players[connexion]["name"] = name
+        self.game_monitor.add_player(name=name, species=self._players[connexion]['species'])
         logger.info(f"SERVER: Received name '{name}' from connexion!")
 
     @staticmethod
@@ -237,13 +270,17 @@ class GameMasterWorker(AbstractWorker):
         assert isinstance(player_connection_2, socket.socket)
 
         has_won = Species.NONE
+        nb_round = 0
         for _round in range(self._max_rounds):
+            nb_round = _round
             has_won = self._play_one_round(player_connection_1, player_connection_2)
             if has_won is not Species.NONE:
                 break
 
         logger.info(f"Game #{len(self._game_monitor)} ended. Winning species: {has_won}")
-        self._game_monitor.append(self._get_name_from_species(has_won))
+        self._game_monitor.append(winning_species=self._get_name_from_species(has_won),
+                                  starting_species=self._starting_species,
+                                  nb_rounds=nb_round)
 
         for player in self._players:
             self.end(player)
@@ -271,11 +308,13 @@ class GameMasterWorker(AbstractWorker):
         logger.info("Game worker thread started!")
 
     def _init_server(self):
+        self.game_monitor.add_server_config(name="default")
         self._server = GameServer(game_worker=self)
 
     def _init_game(self, n=N, m=M):
         self._game_map.load_map(n, m)
         self._updates = [UPDATES.copy()]
+        self.game_monitor.add_game(n=n, m=m, map=self._updates[0])
         self._game_map.update(self._updates[0])
 
     def _init(self, connexion):
@@ -338,6 +377,10 @@ class GameMasterWorker(AbstractWorker):
         self._loop_thread = Thread(target=self.loop)
         self._loop_thread.start()
 
+    def stop(self):
+        self._server.stop()
+        self._loop_thread.join(timeout=1)
+
     def join(self):
         self._loop_thread.join()
 
@@ -348,4 +391,5 @@ if __name__ == '__main__':
     game_master.start()
     MapViewer().mainloop()
     game_master.join()
+    print(game_master.game_monitor)
     logger.info("END OF GAME MASTER / SERVER")
