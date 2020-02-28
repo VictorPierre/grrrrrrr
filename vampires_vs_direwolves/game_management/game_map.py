@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Generator
 
 import numpy as np
 
 from common.logger import logger
-from common.models import Species
-from game_management.abstract_game_map import AbstractGameMap
+from common.models import Singleton, Species
+from game_management.abstract_game_map import (AbstractGameMap,
+                                               AbstractGameMapWithVisualizer)
 
 
 class GameMap(AbstractGameMap):
     """Game map storage is a numpy array: [[[number of humans, number of vampires, number of werewolves], ...], ...]
     and three other numpy arrays of each character: [[number of persons, ...], ...]
     """
+
     def __init__(self):
         super().__init__()
         self._human_map = None
@@ -19,13 +21,13 @@ class GameMap(AbstractGameMap):
         self._werewolf_map = None
 
     def load_map(self, n: int, m: int):
-        super().load_map(n, m)
         self._map_table = np.zeros((n, m, 3), int)
         self._human_map = np.zeros((n, m), int)
         self._vampire_map = np.zeros((n, m), int)
         self._werewolf_map = np.zeros((n, m), int)
+        super().load_map(n, m)
 
-    def get_species_map(self, species: Species):
+    def _get_species_map(self, species: Species):
         if species is Species.HUMAN:
             return self._human_map
         elif species is Species.VAMPIRE:
@@ -56,13 +58,16 @@ class GameMap(AbstractGameMap):
     def get_cell_species_count(self, position: Tuple[int, int], species: Union[Species, int]) -> int:
         return self.__get_cell(position)[species if isinstance(species, int) else species.value]
 
-    def find_species_position(self, species: Species) -> List[Tuple[int, int]]:
-        non_zero_tab = np.nonzero(self.get_species_map(species))
-        species_positions = []
+    def species_position_generator(self, species: Species) -> Generator:
+        non_zero_tab = np.nonzero(self._get_species_map(species))
         for i, j in zip(non_zero_tab[0], non_zero_tab[1]):
-            species_positions.append((j, i))
-        logger.debug(f"Positions of {species.name}: {species_positions}")
-        return species_positions
+            yield j, i
+
+    def species_position_and_number_generator(self, species: Species) -> Generator:
+        non_zero_tab = np.nonzero(self._get_species_map(species))
+        table = self._get_species_map(species)
+        for i, j in zip(non_zero_tab[0], non_zero_tab[1]):
+            yield (j, i), table[i, j]
 
     def update(self, ls_updates: List[Tuple[int, int, int, int, int]]):
         for update in ls_updates:
@@ -72,6 +77,13 @@ class GameMap(AbstractGameMap):
             self._vampire_map[x, y] = update[3]
             self._werewolf_map[x, y] = update[4]
         logger.debug("Game map updated")
+        super().update(ls_updates)
 
-    def show_map(self):
-        print(self._map_table)
+
+def compute_new_board(map: AbstractGameMap, move: Tuple[int, int, int, int, int]) -> AbstractGameMap:
+    pass
+
+
+class ServerGameMap(GameMap, AbstractGameMapWithVisualizer):
+    def __init__(self):
+        super().__init__()

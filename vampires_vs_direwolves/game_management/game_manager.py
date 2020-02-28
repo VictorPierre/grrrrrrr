@@ -12,8 +12,12 @@ from common.exceptions import GameProtocolException
 from common.logger import logger
 from common.models import Command, DataType, Species
 from game_management.abstract_game_map import AbstractGameMap
-from game_management.game_map import GameMap
+from game_management.rule_checks import check_movements
 from server_connection.client import Client
+from game_management.game_map import GameMap
+from common.models import Command, Species
+
+DEBUG_MODE = True
 
 
 class GameManager:
@@ -43,39 +47,15 @@ class GameManager:
 
     def move(self, movements: List[Tuple[int, int, int, int, int]]):
         """Send MOV command to server"""
-        # rule n°1
-        assert len(movements) >= 1
-        _starting_points, _ending_points = defaultdict(int), set()  # for rules
-
         movements_export = []
         for movement in movements:
-            # table size respected
-            assert 0 <= movement[0] < self._map.m  # 0 <= x < nb_columns
-            assert 0 <= movement[1] < self._map.n  # 0 <= y < nb_lines
-            assert 0 <= movement[3] < self._map.m  # 0 <= x < nb_columns
-            assert 0 <= movement[4] < self._map.n  # 0 <= y < nb_lines
-            # rule n°2
-            assert self._map.get_cell_species(
-                (movement[0], movement[1])) is self._species
-            # rule n°4
-            assert -1 <= movement[0] - movement[3] <= 1
-            assert -1 <= movement[1] - movement[4] <= 1
-            _starting_points[(movement[0], movement[1])] += movement[2]
-            _ending_points.add((movement[3], movement[4]))
-
             movements_export.extend(movement)
-
-        # rule n°5
-        assert not (_starting_points.keys() & _ending_points)  # rule n°5
-        # rule n°3 + rule n°6 + no movement of 0 person
-        assert all(0 < nb <= self._map.get_cell_species_count(pos, self._species)
-                   for pos, nb in _starting_points.items())
 
         self._client.send("MOV", len(movements), *movements_export)
         logger.debug(f"{self._name}: Sent MOV command!")
 
     def _get_int(self) -> int:
-        return self._client.receive(1, expected_type=DataType.INT)
+        return self._client.receive_int()
 
     # #### COMMANDS TO RECEIVE ####
     # React to command sent by server
@@ -128,6 +108,8 @@ class GameManager:
         t0 = time.time()
         logger.info(f"{self._name}: It's our turn !")
         new_movements = self._ai.generate_move()
+        if DEBUG_MODE:
+            check_movements(new_movements, self._map, self._species)  # check moves correctness
         self.move(new_movements)  # MOV
         t1 = time.time()
         logger.info(
@@ -135,7 +117,6 @@ class GameManager:
 
     def map(self):
         self._update()
-        self._map.show_map()
         logger.info(f"{self._name}: The map has been loaded!")
         self._species = self._map.get_cell_species(self._initial_position)
         self._ai.load_species(self._species)
@@ -143,22 +124,13 @@ class GameManager:
 
     # #### INTERACTIONS WITH SERVER ####
 
-    @staticmethod
-    def _interpret_message(message: str) -> Optional[Command]:
-        try:
-            command = Command[message]
-        except KeyError as _err:
-            logger.error(f"Error: server sent an invalid command: {message}")
-            return None
-        return command
-
     def _execute_command(self, command: Command):
         func = getattr(self, command.value)
         return func()
 
     def _wait_server(self):
         message = self._client.receive()
-        command = self._interpret_message(message)
+        command = Command.from_string(message)
         logger.debug(f"{self._name}: Command received: '{command}'")
         if command is None:
             return None
@@ -184,18 +156,22 @@ class GameManager:
     def start(self):
         is_connected = self._client.connect()
         if is_connected:
-            self.start_game()  # NME
-            self._play()
+            try:
+                self.start_game()  # NME
+                self._play()
+            except (ConnectionResetError, ConnectionAbortedError, ConnectionRefusedError, TimeoutError) as err:
+                logger.error(f"Connection error: {err}")
+                logger.exception(err)
         logger.debug(f"{self._name}: GameManager closing...")
 
 
 if __name__ == '__main__':
-    player1 = Thread(target=GameManager(
-        player_name="Boutchou", ai_class=DefaultAI).start)
-    player2 = Thread(target=GameManager(
-        player_name="Boss", ai_class=DefaultAI).start)
-    player1.start()
-    player2.start()
-    player1.join()
-    player2.join()
-    logger.info("End of program")
+    while True:
+        player1 = Thread(target=GameManager(player_name="Boutchou", ai_class=DefaultAI).start)
+        player2 = Thread(target=GameManager(player_name="Boss", ai_class=DefaultAI).start)
+        player1.start()
+        player2.start()
+        player1.join()
+        player2.join()
+        logger.info("End of program")
+        logger.info("Auto-restarting players servers...")
