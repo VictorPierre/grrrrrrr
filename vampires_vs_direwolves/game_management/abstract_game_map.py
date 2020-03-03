@@ -2,8 +2,10 @@
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Union, Generator, Set
 
+from common.exceptions import GameMapOverPopulated
 from common.logger import logger
 from common.models import Species
+from common.xml_map_parser import XMLMapParser
 from game_management.map_viewer import MapViewer
 
 
@@ -14,6 +16,18 @@ class AbstractGameMap(ABC):
         self._n: int = 0  # number of lines
         self._m: int = 0  # number of columns
         self._map_table = None  # map storage
+
+    @staticmethod
+    def get_map_param_from_file(path: str = ""):
+        n, m, updates = XMLMapParser().read_xml_map(path)
+        if sum(upd[2] + upd[3] + upd[4] for upd in updates) >= 256:
+            raise GameMapOverPopulated(f"Too much population in map {path} (>255): {updates}")
+        return n, m, updates
+
+    def load_map_from_file(self, path: str = ""):
+        n, m, updates = self.get_map_param_from_file(path)
+        self.load_map(n, m)
+        self.update([updates])
 
     @abstractmethod
     def load_map(self, n: int, m: int):

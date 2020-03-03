@@ -2,6 +2,7 @@
 import xml.etree.ElementTree as ET
 import os
 
+from common.logger import logger
 from common.models import Species
 
 MAP_DEFAULT_PATH = 'grrrrrrr/graphic_interface/testmap.xml'
@@ -28,14 +29,15 @@ class XMLMapParser:
         return None
 
     def read_xml_map(self, path=""):
-        path = path or self._retrieve_path(path) or self._retrieve_path()
-        if path is None:
+        path = (path or self._retrieve_path(path)) or self._retrieve_path()
+        if not path:
+            logger.warning(f"No correct path found for XML map: {path}")
             return FileNotFoundError("None path")
         root = ET.parse(path).getroot()
         n = int(root.get("Rows"))
         m = int(root.get("Columns"))
-        assert n > 1
-        assert m > 1
+        assert n > 1, "n must be > 1"
+        assert m > 1, "m must be > 1"
         updates = []
         for node in root.getchildren():
             species = Species.from_xml_tag(node.tag)
