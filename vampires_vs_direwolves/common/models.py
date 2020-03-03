@@ -68,6 +68,7 @@ class Species(enum.Enum):
         return cls.from_cell_to_species_and_number(cell)[0]
 
     def to_cell(self, position: Tuple[int, int], number: int) -> Tuple[int, int, int, int, int]:
+        assert number >= 0
         cell = [*position, 0, 0, 0]
         if self is not Species.NONE:
             cell[2 + self.value] = number

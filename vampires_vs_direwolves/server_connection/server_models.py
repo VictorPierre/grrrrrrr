@@ -128,6 +128,7 @@ class AbstractServer(ABC):
         self._is_active = False
         if self._sock:
             self._sock.close()
+            logger.debug("Server socket closed")
 
 
 class AbstractWorker(ABC):

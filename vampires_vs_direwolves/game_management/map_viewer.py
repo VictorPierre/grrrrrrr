@@ -50,7 +50,11 @@ class CustomTk(tk.Tk):
 
     def destroy(self):
         self._map_viewer._is_active = False
+        logger.debug("Destroying window...")
         super().destroy()
+        logger.debug("Window destroyed. Quitting window...")
+        super().quit()
+        logger.debug("Window quited.")
 
 
 class MapViewer(AbstractMapViewer, metaclass=Singleton):
@@ -124,6 +128,7 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
 
     @if_is_visible_only
     def stop(self):
+        # WARN: buggy is not called from main thread
         self.close()
         self._is_active = False
         try:

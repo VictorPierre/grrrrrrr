@@ -25,6 +25,7 @@ except Exception as _err:
 
 class GameMonitor:
     """Class to record game details"""
+
     def __init__(self):
         self._server_config = None
         self._game_parameters = None
@@ -138,13 +139,22 @@ class GameMasterWorker(AbstractWorker):
 
     def _update_game_map(self, movements: List[Tuple[int, int, int, int, int, int]], species: Species):
         ls_updates = []
+        nb_old_pos = {}
+        nb_new_pos = {}
         for old_x, old_y, nb_move, new_x, new_y in movements:
-            update1 = (old_x, old_y, 0, 0, 0)
-            target_species, target_nb = self._game_map.get_cell_species_and_number((new_x, new_y))
-            res_species, res_nb = self.fight(species, nb_move, target_species, target_nb)
-            update2 = res_species.to_cell((new_x, new_y), res_nb)
-            ls_updates.append(update1)
+            previous_nb = nb_old_pos.get((old_x, old_y), self._game_map.get_cell_species_and_number((old_x, old_y))[1])
+            nb_old_pos[(old_x, old_y)] = previous_nb - nb_move
+            nb_new_pos[(new_x, new_y)] = nb_new_pos.get((new_x, new_y), 0) + nb_move
+
+        for pos, nb in nb_old_pos.items():
+            ls_updates.append(species.to_cell(pos, nb))
+
+        for pos, nb in nb_new_pos.items():
+            target_species, target_nb = self._game_map.get_cell_species_and_number(pos)
+            res_species, res_nb = self.fight(species, nb, target_species, target_nb)
+            update2 = res_species.to_cell(pos, res_nb)
             ls_updates.append(update2)
+
         self._game_map.update(ls_updates)
         self._updates.append(ls_updates)
 
@@ -162,7 +172,7 @@ class GameMasterWorker(AbstractWorker):
         try:
             check_movements(movements, self._game_map, self._players[connexion]["species"])
         except AssertionError as err:
-            logger.error(f"{self._players[connexion]['name']} player cheated!")
+            logger.error(f"{self._players[connexion]['name']} player cheated: {err}")
             raise PlayerCheatedException(self._players[connexion]['name'])
         logger.debug(f"SERVER: Received MOV command!")
 
@@ -229,7 +239,7 @@ class GameMasterWorker(AbstractWorker):
             assert cmd is PlayerCommand.MOV, f"Bad command {cmd}"
             self.mov(player_connection)
         except (PlayerCheatedException, AssertionError) as err:
-            logger.warning(err)
+            logger.warning(f"Player {self._players[player_connection]['name']} cheated: {err}")
             return Species.get_opposite_species(self._players[player_connection]["species"])
         except PlayerTimeoutError as err:
             logger.warning(err)

@@ -51,7 +51,7 @@ class GameServer(Thread, AbstractServer):
                 connection, _client = self._sock.accept()
                 self._game_worker.add(connection)
             except (OSError, IOError) as err:
-                logger.debug(f"Server error: {err}")
+                logger.warning(f"Server error: {err}")
                 # logger.exception(err)
             except TooMuchConnections as err:
                 err_msg = f"Too much connections: {err}"

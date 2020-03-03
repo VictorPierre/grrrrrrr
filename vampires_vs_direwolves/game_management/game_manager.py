@@ -3,9 +3,7 @@ import time
 from threading import Thread
 from typing import List, Tuple, Optional, Type
 
-from boutchou.abstract_ai import AbstractAI
-from boutchou.boutchou_ai import Boutchou
-from boutchou.default_ai import DefaultAI
+from boutchou import *  # import all AIs
 from common.exceptions import GameProtocolException
 from common.logger import logger
 from game_management.abstract_game_map import AbstractGameMap
@@ -30,6 +28,7 @@ class GameManager:
         self._client: Client = Client(config=server_config)
         self._ai: AbstractAI = ai_class()
         self._map: AbstractGameMap = map_class()
+        logger.debug(f"AI: {self._ai.__class__.__name__}, Map type: {self._map.__class__.__name__}")
         self._species: Species = Species.NONE
         # noinspection PyTypeChecker
         self._initial_position: Tuple[int, int] = None
