@@ -15,21 +15,14 @@ from game_management.rule_checks import check_movements
 from server_connection.game_server import GameServer
 from server_connection.server_models import ServerCommunication, AbstractWorker
 
-try:
-    N, M, UPDATES = XMLMapParser().read_xml_map()
-except Exception as _err:
-    logger.warning("Failed to load XML map")
-    logger.exception(_err)
-    N, M, UPDATES = 5, 5, [(0, 2, 0, 10, 0), (3, 2, 0, 0, 10)]
-
 
 class GameMonitor:
     """Class to record game details"""
 
     def __init__(self):
         self._server_config = None
-        self._game_parameters = None
 
+        self._game_parameters = None
         self._game_counter = None
         self._players = None
         self._game_details = None
@@ -55,7 +48,7 @@ class GameMonitor:
         self._server_config = kwargs
 
     def add_game(self, **kwargs):
-        self._game_parameters = kwargs
+        self._game_parameters.update(kwargs)
 
     def add_player(self, name, species):
         self._players.append(dict(name=name, species=species))
@@ -67,16 +60,20 @@ class GameMonitor:
                                    "winner": winning_species})
 
     def reset(self):
+        self._game_parameters = {}
         self._game_counter = []
         self._players = []
         self._game_details = []
-        self._all_games.append({"players": self._players, "results": self._game_counter, "details": self._game_details})
+        self._all_games.append({"parameters": self._game_parameters, "players": self._players,
+                                "results": self._game_counter, "details": self._game_details})
 
     def __str__(self):
-        res = f"Game monitor (server: {self._server_config}):\n" \
-              f"Game map: {self._game_parameters}\n"
+        res = f"Game monitor (server: {self._server_config}):\n"
+        # f"Game map: {self._game_parameters}\n"
         for i, game in enumerate(self._all_games):
-            res += f"Game set #{i} summary: Players: {game['players']}\n" \
+            res += f"Game set #{i} summary: " \
+                   f"Parameters: {game['parameters']}" \
+                   f"Players: {game['players']}\n" \
                    f"Results: {self._get_summary(game['results'])}\n" \
                    f"Details: {game['details']}\n"""
         return res
@@ -85,11 +82,13 @@ class GameMonitor:
 class GameMasterWorker(AbstractWorker):
     """Game master including a server"""
 
-    def __init__(self, nb_players: int, max_rounds: int, max_nb_games: int, auto_restart: int = 0):
+    def __init__(self, nb_players: int, max_rounds: int, max_nb_games: int, auto_restart: int = 0, map_path: str = ""):
         self._nb_players = nb_players
         self._max_rounds = max_rounds
         self._max_nb_games = max_nb_games
         self._auto_restart = auto_restart  # if negative, infinity loop
+
+        self._map_path = map_path
 
         self._server: GameServer = None
         self._game_map = ServerGameMap()
@@ -121,6 +120,9 @@ class GameMasterWorker(AbstractWorker):
 
     def get_player_name(self, connection):
         return f"{self._players[connection]['name']} ({self._players[connection]['species'].name})"
+
+    def change_map_path(self, path: str):
+        self._map_path = path
 
     # #### COMMANDS TO RECEIVE ####
     # Receive commands from connections
@@ -321,10 +323,16 @@ class GameMasterWorker(AbstractWorker):
         self.game_monitor.add_server_config(name="default")
         self._server = GameServer(game_worker=self)
 
-    def _init_game(self, n=N, m=M):
-        self._game_map.load_map(n, m)
-        self._updates = [UPDATES.copy()]
-        self.game_monitor.add_game(n=n, m=m, map=self._updates[0])
+    def _init_map(self):
+        n, m, updates = self._game_map.get_map_param_from_file(path=self._map_path)
+        self._n = n
+        self._m = m
+        self._init_map_updates = updates
+        self.game_monitor.add_game(file=self._map_path, n=n, m=m, map=updates)
+
+    def _init_game(self):
+        self._game_map.load_map(self._n, self._m)
+        self._updates = [self._init_map_updates.copy()]
         self._game_map.update(self._updates[0])
 
     def _init(self, connexion):
@@ -374,6 +382,7 @@ class GameMasterWorker(AbstractWorker):
                 logger.warning(f"Auto-restarting server ({counter + 1}/{self._auto_restart + 1})...")
                 self._game_monitor.reset()
             self._init_server()
+            self._init_map()
             self._init_game()
             self._is_active = True
             self._server.start()
