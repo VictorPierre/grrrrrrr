@@ -19,7 +19,7 @@ class RushToOpponentAI(AbstractSafeAI):
         except StopIteration:
             raise SpeciesExtinctionException(f"{self._species} already extinct!")
         rules = NextMoveRule(self._map)
-        new_position = rules.move_to_opponent(old_position)
+        new_position = rules.move_to_closest_opponent(old_position)
 
         sleep(WAIT_TIME)  # wait WAIT_TIME second(s)
         return [(*old_position, number, *new_position)]

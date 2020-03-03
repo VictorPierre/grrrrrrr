@@ -92,14 +92,17 @@ class AbstractGameMap(ABC):
                 yield x, y
 
     @abstractmethod
-    def get_cell_species(self, position: Tuple[int, int]) -> Species:
-        """Given a position, returns the species living in"""
-        pass
-
-    @abstractmethod
     def get_cell_species_and_number(self, position: Tuple[int, int]) -> Tuple[Species, int]:
         """Given a position, returns the tuple with the format: (species in the cell, number of persons)"""
         pass
+
+    def get_cell_species(self, position: Tuple[int, int]) -> Species:
+        """Given a position, returns the species living in"""
+        return self.get_cell_species_and_number(position)[0]
+
+    def get_cell_number(self, position: Tuple[int, int]) -> int:
+        """Given a position, returns the tuple with the format: (species in the cell, number of persons)"""
+        return self.get_cell_species_and_number(position)[1]
 
     @abstractmethod
     def get_cell_species_count(self, position: Tuple[int, int], species: Union[Species, int]) -> int:
