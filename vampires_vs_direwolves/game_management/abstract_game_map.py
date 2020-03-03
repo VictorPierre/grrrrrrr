@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Union, Generator
+from typing import List, Tuple, Union, Generator, Set
 
 from common.logger import logger
 from common.models import Species
@@ -44,11 +44,15 @@ class AbstractGameMap(ABC):
             range_coord = (-1, 2)
         return range_coord
 
-    def get_possible_moves(self, position: Tuple[int, int], force_move: bool = False) -> List[Tuple[int, int]]:
+    def get_possible_moves(self, position: Tuple[int, int], force_move: bool = False,
+                           forbidden_positions: Set[Tuple[int, int]] = None) -> List[Tuple[int, int]]:
         """Return the list of possible moves from a position.
 
-        If force_move, (x,y) is not returned in te list of possibilities.
+        :param position: position tuple (x, y) from which to move
+        :param force_move: if True, (x,y) is not returned in the list of possibilities.
+        :param forbidden_positions: optional set of forbidden position
         """
+        forbidden_positions = forbidden_positions or set()
         x, y = position
         range_x = self._get_move_range(x, self.m)
         range_y = self._get_move_range(y, self.n)
@@ -59,6 +63,7 @@ class AbstractGameMap(ABC):
         if force_move:
             positions_set.difference_update({position})
         assert 4 - int(force_move) <= len(positions_set) <= 9 - int(force_move)
+        positions_set -= forbidden_positions
         return list(positions_set)
 
     @property
