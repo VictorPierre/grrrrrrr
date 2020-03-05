@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from boutchou.rules import RuleSequence
+from boutchou.rules_sequence import RulesSequence
 
 
-class RushToHumansAI(RuleSequence):
+class RushToHumansAI(RulesSequence):
     """Rush to human groups, then rush to opponent, no split, for tests"""
 
     def __init__(self):
@@ -11,7 +11,7 @@ class RushToHumansAI(RuleSequence):
         self._move_methods = ["move_to_closest_human", "move_to_closest_opponent", "random_move"]
 
 
-class MoveToBestHumans(RuleSequence):
+class MoveToBestHumans(RulesSequence):
     """Rush to best human groups, then rush to opponent, no split, for tests"""
 
     def __init__(self, coef_distance=0, coef_number=0):

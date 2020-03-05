@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from boutchou.rules import NextMoveRule, RuleSequence
+from boutchou.rules import NextMoveRule
+from boutchou.rules_sequence import RulesSequence
 
 
-class RushToOpponentAI(RuleSequence):
+class RushToOpponentAI(RulesSequence):
     """Rush to human groups, then random group, no split, for tests"""
 
     def __init__(self):

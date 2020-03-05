@@ -49,6 +49,7 @@ class GameMonitor:
 
     def add_game(self, **kwargs):
         self._game_parameters.update(kwargs)
+        logger.info(f"Game parameters: {kwargs}")
 
     def add_player(self, name, species):
         self._players.append(dict(name=name, species=species))
@@ -406,7 +407,7 @@ class GameMasterWorker(AbstractWorker):
 
 if __name__ == '__main__':
     MapViewer().set_visible(True)
-    game_master = GameMasterWorker(nb_players=2, max_rounds=100, max_nb_games=2, auto_restart=-1)
+    game_master = GameMasterWorker(nb_players=2, max_rounds=100, max_nb_games=2, auto_restart=1)
     game_master.start()
     MapViewer().mainloop()
     game_master.join()

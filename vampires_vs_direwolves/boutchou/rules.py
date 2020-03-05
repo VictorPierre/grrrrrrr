@@ -1,17 +1,10 @@
-import functools
 from random import randint
-from time import sleep
 from typing import Tuple, List
-
-from boutchou import AbstractSafeAI
 
 from common.logger import logger
 from common.models import Species
 from game_management.abstract_game_map import AbstractGameMap
-from game_management.map_helpers import (get_next_move_to_destination, get_distances_to_a_species,
-                                         get_first_species_position_and_number)
-
-WAIT_TIME = 1 * 0.11  # in seconds
+from game_management.map_helpers import (get_next_move_to_destination, get_distances_to_a_species)
 
 
 class AbstractMoveRules:
@@ -25,7 +18,7 @@ class PossibleMoves(AbstractMoveRules):
     """Class with rules to move from a position to a range of possible moves."""
 
     def get_possible_moves(self, position, *args, **kwargs) -> List[Tuple[int, int]]:
-        return self._game_map.get_possible_moves(position, *args, *kwargs)
+        return self._game_map.get_possible_moves(position, *args, **kwargs)
 
     def get_possible_moves_without_overcrowded_houses(self, position, *args, **kwargs) -> List[Tuple[int, int]]:
         possible_moves = self._game_map.get_possible_moves(position, *args, *kwargs)
@@ -107,30 +100,3 @@ class NextMoveRule(AbstractMoveRules):
         if new_pos not in self._possible_moves.get_possible_moves_without_overcrowded_houses(position):
             return None
         return new_pos
-
-
-class RuleSequence(AbstractSafeAI):
-    """AI working with a list of rules.
-
-    WARN: No split possible for the moment !
-    """
-    def __init__(self):
-        super().__init__()
-        self._move_methods = []
-        self._methods_args = []
-        self._methods_kwargs = []
-
-    def _generate_move(self):
-        old_position, number = get_first_species_position_and_number(self._map, self._species)  # WARN: only 1 position
-
-        rules = NextMoveRule(self._map, self._species)
-        new_position = None
-        for i, move_method in enumerate(self._move_methods):
-            args = self._methods_args if len(self._methods_args) > i and self._methods_args[i] else tuple()
-            kwargs = self._methods_kwargs if len(self._methods_kwargs) > i and self._methods_kwargs[i] else {}
-            new_position = getattr(rules, move_method)(old_position, *args, **kwargs)
-            if new_position is not None:
-                break
-
-        sleep(WAIT_TIME)  # wait WAIT_TIME second(s)
-        return [(*old_position, number, *new_position)] if new_position else None

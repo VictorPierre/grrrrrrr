@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from typing import Tuple, List, Optional
 
 from boutchou.rules import NextMoveRule
-from common.exceptions import SpeciesExtinctionException
 from common.logger import logger
 from common.models import Species
 from game_management.abstract_game_map import AbstractGameMap
