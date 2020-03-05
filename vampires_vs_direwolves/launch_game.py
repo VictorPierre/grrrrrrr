@@ -14,7 +14,7 @@ if __name__ == '__main__':
     sleep(1)
 
     ##Create players
-    player1 = Thread(target=GameManager(player_name="Boutchou", ai_class=DefaultAI).start)
+    player1 = Thread(target=GameManager(player_name="Boutchou", ai_class=HumanAI).start)
     player2 = Thread(target=GameManager(player_name="Boss", ai_class=DefaultAI).start)
     player1.start()
     player2.start()

@@ -1,7 +1,7 @@
 from boutchou.abstract_ai import AbstractAI
 
 
-class HumanAi(AbstractAI):
+class HumanAI(AbstractAI):
 
     def generate_move(self):
 

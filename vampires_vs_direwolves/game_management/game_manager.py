@@ -7,7 +7,7 @@ from typing import List, Optional, Tuple, Type
 from boutchou.abstract_ai import AbstractAI
 from boutchou.boutchou_ai import Boutchou
 from boutchou.default_ai import DefaultAI
-from boutchou.human_ai import HumanAi
+from boutchou.human_ai import HumanAI
 from common.exceptions import GameProtocolException
 from common.logger import logger
 from common.models import Command, DataType, Species
