@@ -31,7 +31,9 @@ class ServerCommunication:
     @classmethod
     def create_package(cls, arg):
         if isinstance(arg, (int, np.integer)):
-            return int(arg).to_bytes(1, "big", signed=False)
+            if arg >= 256:
+                logger.warning(f"Integer to send is too big: {arg}! It will be replaced by {arg % 256}.")
+            return int(arg % 256).to_bytes(1, "big", signed=False)  # % 256 to ensure only 1 bit is used
         elif isinstance(arg, (tuple, list)):
             package = bytes()
             for sub_arg in arg:
