@@ -15,7 +15,7 @@ class RandomAI(AbstractAI):
     """Random AI with no split, for tests"""
 
     def _random_move(self, initial_position: Tuple[int, int]) -> Tuple[int, int]:
-        new_pos = NextMoveRule(self._map).random_move(initial_position)
+        new_pos = NextMoveRule(self._map, self._species).random_move(initial_position)
         logger.debug(f"New position computed: {new_pos}")
         return new_pos
 

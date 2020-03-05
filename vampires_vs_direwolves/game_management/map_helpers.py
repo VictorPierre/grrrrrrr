@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import Tuple, Dict, List, Union
 
+from common.exceptions import SpeciesExtinctionException
 from common.models import Species
 from game_management.abstract_game_map import AbstractGameMap
 
@@ -62,6 +63,14 @@ def get_next_move_to_destination(initial_position, destination):
     shift_x = _get_next_coord_to_destination(initial_position[0], destination[0])
     shift_y = _get_next_coord_to_destination(initial_position[1], destination[1])
     return initial_position[0] + shift_x, initial_position[1] + shift_y
+
+
+def get_first_species_position_and_number(game_map, species):
+    try:
+        old_position, number = next(game_map.species_position_and_number_generator(species))
+    except StopIteration:
+        raise SpeciesExtinctionException(f"{species} already extinct!")
+    return old_position, number
 
 
 if __name__ == '__main__':

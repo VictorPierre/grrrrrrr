@@ -35,6 +35,5 @@ class MultiSplitAI(AbstractSafeAI):
                 updates.append((*old_position, 1, *possible_moves[i]))
                 forbidden_moves_start.add(old_position)
                 forbidden_moves_end.add(possible_moves[i])
-        logger.info(f"UPDATES MULTISPLIT : {updates}")
         sleep(WAIT_TIME)  # wait WAIT_TIME second(s)
         return updates or None

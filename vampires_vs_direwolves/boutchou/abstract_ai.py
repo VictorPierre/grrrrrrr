@@ -7,6 +7,7 @@ from common.exceptions import SpeciesExtinctionException
 from common.logger import logger
 from common.models import Species
 from game_management.abstract_game_map import AbstractGameMap
+from game_management.map_helpers import get_first_species_position_and_number
 
 
 class AbstractAI(ABC):
@@ -38,11 +39,8 @@ class AbstractSafeAI(AbstractAI, ABC):
         return self._generate_move() or self.generate_safe_move()
 
     def generate_safe_move(self):
-        """Generate an always-safe move"""
-        try:
-            old_position, number = next(self._map.species_position_and_number_generator(self._species))
-        except StopIteration:
-            raise SpeciesExtinctionException(f"{self._species} already extinct!")
-        new_position = NextMoveRule(self._map).safe_move(old_position)
+        """Generate an always-safe move (in the sense of game rules)"""
+        old_position, number = get_first_species_position_and_number(self._map, self._species)
+        new_position = NextMoveRule(self._map, self._species).safe_move(old_position)
         logger.debug(f"Safe move: {new_position}")
         return [(*old_position, number, *new_position)]

@@ -162,8 +162,8 @@ class GameManager:
 
 if __name__ == '__main__':
     while True:
-        player1 = Thread(target=GameManager(player_name="Boutchou", ai_class=DefaultAI).start)
-        player2 = Thread(target=GameManager(player_name="Boss", ai_class=DefaultAI).start)
+        player1 = Thread(target=GameManager(player_name="Boutchou", ai_class=RushToHumansAI).start)
+        player2 = Thread(target=GameManager(player_name="Boss", ai_class=MoveToBestHumans).start)
         player1.start()
         player2.start()
         player1.join()
