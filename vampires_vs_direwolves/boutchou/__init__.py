@@ -6,6 +6,7 @@ from boutchou.default_ai import DefaultAI
 from boutchou.rush_to_humans_ai import RushToHumansAI, MoveToBestHumans
 from boutchou.rush_to_opponent_ai import RushToOpponentAI
 from boutchou.multi_split_ai import MultiSplitAI
+from boutchou.tkinter_ai import TkinterHumanAI
 
 __all__ = [
     'AbstractAI',
@@ -17,4 +18,6 @@ __all__ = [
     'MoveToBestHumans',
     'RushToOpponentAI',
     'MultiSplitAI',
+
+    'TkinterHumanAI',
 ]

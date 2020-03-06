@@ -5,10 +5,12 @@ import functools
 import threading
 import tkinter as tk
 from abc import ABC, abstractmethod
+from time import sleep
 from typing import List, Tuple
 
 from common.logger import logger
 from common.models import Singleton
+from game_management.rule_checks import check_movements
 
 
 class AbstractMapViewer(metaclass=Singleton):
@@ -67,6 +69,7 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
     >>> MapViewer().mainloop()  # blocking until the window is closed
     >>> # Join the worker thread
     """
+
     def __init__(self, height=500, width=500):
         self._is_visible = False  # False means the map viewer is totally inactive
         self._is_active = None  # True when the window is ok, False on error or if it is not loaded
@@ -76,6 +79,10 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
         self._height = height
         self._width = width
         self._nb_updates = 0
+
+        self._in_interaction_mode = False
+        self._ready_to_send_moves = False
+        self._next_moves = []
 
         # Tk variables
         self._window: CustomTk = None
@@ -103,6 +110,8 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
             self._info_str = tk.StringVar(self._window, value="Loading...")  # todo
             self._info_label = tk.Label(self._window, textvariable=self._info_str)
             self._info_label.pack()
+
+            self._window.bind("<Key>", self._key_callback)
 
             self._canvas = tk.Canvas(self._window, width=self._width, height=self._height, bg='gray')
             self._canvas.pack()
@@ -160,6 +169,7 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
                                      self._height / self._game_map.n * (y + 0.5),
                                      text=str(number),
                                      )
+            self._canvas.bind("<Button-1>", self._click_callback)
         self._info_str.set(f"Update #{self._nb_updates}")
         self._nb_updates += 1
         logger.debug("Visualizer updated!")
@@ -192,3 +202,66 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
         if not self._is_visible:
             return
         self._info_str.set(value=text)
+
+    def _cursor_position_to_map_position(self, cursor_position):
+        x, y = cursor_position
+        x_map = (self._game_map.m * x) // self._width
+        y_map = (self._game_map.n * y) // self._height
+        return x_map, y_map
+
+    def _click_callback(self, event):
+        if not self._in_interaction_mode:
+            logger.warning("It's not your turn to play !")
+            return
+        cell_position = self._cursor_position_to_map_position((event.x, event.y))
+        print(f"clicked at {cell_position}")
+        if not self._next_moves or self._next_moves[-1][3] != -1:
+            print("new move source")
+            self._next_moves.append([*cell_position, 0, -1, -1])
+        else:
+            print("new move dest")
+            self._next_moves[-1][3:] = cell_position
+        print(f"moves: {self._next_moves}")
+
+    def _key_callback(self, event):
+        if not self._in_interaction_mode:
+            logger.warning("It's not your turn to play !")
+            return
+        print(f"key pressed: {event}")
+        if event.keycode == 13:  # Return key
+            print("enter: send moves")
+            self._ready_to_send_moves = True
+        elif event.keycode == 8:  # backspace
+            print("backspace: reset moves")
+            self._next_moves.clear()
+        elif event.keysym in "0123456789":
+            number = int(event.keysym)
+            print(f"number {number}")
+            if self._next_moves:
+                self._next_moves[-1][2] = self._next_moves[-1][2] * 10 + number
+            print(f"moves: {self._next_moves}")
+        else:
+            print("useless key")
+
+    def get_user_moves(self, species):
+        lock = threading.Lock()
+        lock.acquire()
+        try:
+            self._in_interaction_mode = True
+            self._ready_to_send_moves = False
+            self._next_moves.clear()
+
+            while not self._ready_to_send_moves:
+                sleep(0.1)
+            try:
+                check_movements(self._next_moves, self._game_map, species)
+            except AssertionError as err:
+                logger.warning(f"Bad prompt: {err}. Try again!")
+                return self.get_user_moves(species)
+
+            self._in_interaction_mode = False
+            self._ready_to_send_moves = False
+        finally:
+            lock.release()
+        print(f"sending moves: {self._next_moves}")
+        return self._next_moves.copy()
