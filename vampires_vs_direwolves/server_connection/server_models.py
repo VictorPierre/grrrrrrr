@@ -67,10 +67,11 @@ class ServerCommunication:
         message = bytes()
         t0 = time()
         t1 = t0
-        while len(message) < nb_bytes or (timeout and (t1 - t0) > timeout):
+        while (len(message) < nb_bytes) and (not timeout or ((t1 - t0) < timeout)):
             message += connection.recv(nb_bytes - len(message))
             t1 = time()
-        if timeout and (t1 - t0) > timeout:
+        if timeout and (t1 - t0) >= timeout:
+            logger.error(f"Timeout Error: more than {timeout} s.")
             raise PlayerTimeoutError(connection)
         decoded_command = cls.decode(message, expected_type)
         return decoded_command
@@ -92,7 +93,7 @@ class AbstractServer(ABC):
     def __init__(self, config: dict = None):
         # noinspection PyTypeChecker
         self._sock: socket.socket = None
-        self._config = config or CONFIG
+        self._config = config or CONFIG.copy()
         self._is_active = True
 
     @property
@@ -109,7 +110,7 @@ class AbstractServer(ABC):
 
     @property
     def timeout(self):
-        return self._config.get("timeout", 5)
+        return self._config.get("timeout", 0)
 
     @abstractmethod
     def _connect(self):

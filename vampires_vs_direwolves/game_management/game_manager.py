@@ -4,7 +4,7 @@ from threading import Thread
 from typing import List, Tuple, Optional, Type
 
 from boutchou import *  # import all AIs
-from common.exceptions import GameProtocolException
+from common.exceptions import GameProtocolException, PlayerTimeoutError
 from common.logger import logger
 from game_management.abstract_game_map import AbstractGameMap
 from game_management.rule_checks import check_movements
@@ -124,6 +124,7 @@ class GameManager:
         return func()
 
     def _wait_server(self):
+        logger.debug(f"{self._species}: Waiting for server answer...")
         message = self._client.receive()
         command = Command.from_string(message)
         logger.debug(f"{self._name}: Command received: '{command}'")
@@ -154,7 +155,8 @@ class GameManager:
             try:
                 self.start_game()  # NME
                 self._play()
-            except (ConnectionResetError, ConnectionAbortedError, ConnectionRefusedError, TimeoutError) as err:
+            except (ConnectionResetError, ConnectionAbortedError, ConnectionRefusedError, TimeoutError,
+                    PlayerTimeoutError) as err:
                 logger.error(f"Connection error: {err}")
                 logger.exception(err)
         logger.debug(f"{self._name}: GameManager closing...")
