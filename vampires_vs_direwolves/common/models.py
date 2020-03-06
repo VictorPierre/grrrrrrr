@@ -49,6 +49,9 @@ class Species(enum.Enum):
     def __repr__(self):
         return self.name
 
+    def __str__(self):
+        return self.name
+
     @classmethod
     def from_cell_to_species_and_number(cls, cell: Tuple[int, int, int]) -> (Species, int):
         non_zero_indexes = np.nonzero(cell)

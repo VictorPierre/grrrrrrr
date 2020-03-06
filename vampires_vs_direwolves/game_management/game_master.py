@@ -237,7 +237,7 @@ class GameMasterWorker(AbstractWorker):
         self.upd(player_connection)
 
         try:
-            msg = ServerCommunication.receive_command(player_connection)
+            msg = ServerCommunication.receive_command(player_connection, timeout=self._server.timeout)
             cmd = PlayerCommand.from_string(msg)
             assert cmd is PlayerCommand.MOV, f"Bad command {cmd}"
             self.mov(player_connection)

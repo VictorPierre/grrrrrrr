@@ -20,6 +20,7 @@ class Client(AbstractServer):
 
     def __init__(self, config: dict = None):
         super().__init__(config=config)
+        self._config["timeout"] = 0  # no timeout in client.
 
     def _connect(self):
         try:

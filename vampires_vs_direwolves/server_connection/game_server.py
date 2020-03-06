@@ -27,7 +27,6 @@ class GameServer(Thread, AbstractServer):
         self._game_worker = game_worker
         self._nb_connections = game_worker.nb_players
         self._is_active = True
-        self._config["timeout"] = self._config.get("timeout", 3)
 
     def _connect(self):
         try:

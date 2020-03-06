@@ -81,6 +81,7 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
         self._nb_updates = 0
 
         self._in_interaction_mode = False
+        self._user_block_is_packed = False
         self._ready_to_send_moves = False
         self._next_moves = []
 
@@ -107,7 +108,7 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
         # Tk window
         try:
             self._title = self._window.title("Vampires versus Werewolves")
-            self._info_str = tk.StringVar(self._window, value="Loading...")  # todo
+            self._info_str = tk.StringVar(self._window, value="Loading...")
             self._info_label = tk.Label(self._window, textvariable=self._info_str)
             self._info_label.pack()
 
@@ -115,6 +116,12 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
 
             self._canvas = tk.Canvas(self._window, width=self._width, height=self._height, bg='gray')
             self._canvas.pack()
+
+            self._user_block = tk.Frame(self._window)
+            _ints = "Select a departure, a destination and a number.\nReturn: send moves / Backspace: reset moves"
+            self._ints_str = tk.StringVar(self._window, value=_ints)
+            self._user_str = tk.StringVar(self._window, value="")
+
             logger.info("Map viewer loaded!")
             self._is_active = True
         except RuntimeError as err:
@@ -222,6 +229,7 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
             print("new move dest")
             self._next_moves[-1][3:] = cell_position
         print(f"moves: {self._next_moves}")
+        self._user_str.set(f"Moves: {self._next_moves}")
 
     def _key_callback(self, event):
         if not self._in_interaction_mode:
@@ -242,12 +250,24 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
             print(f"moves: {self._next_moves}")
         else:
             print("useless key")
+        self._user_str.set(f"Moves: {self._next_moves}")
+
+    def _pack_user_ints(self):
+        self._ints_label = tk.Label(self._user_block, textvariable=self._ints_str)
+        self._ints_label.grid(row=0)
+
+        self._user_label = tk.Label(self._user_block, textvariable=self._user_str)
+        self._user_label.grid(row=1)
+        self._user_block.pack()
+        self._user_block_is_packed = True
 
     def get_user_moves(self, species):
         lock = threading.Lock()
         lock.acquire()
         try:
             self._in_interaction_mode = True
+            if not self._user_block_is_packed:
+                self._pack_user_ints()
             self._ready_to_send_moves = False
             self._next_moves.clear()
 
@@ -256,11 +276,14 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
             try:
                 check_movements(self._next_moves, self._game_map, species)
             except AssertionError as err:
-                logger.warning(f"Bad prompt: {err}. Try again!")
+                err_msg = f"Bad prompt ({err}). Try again!"
+                logger.warning(err_msg)
+                self._user_str.set(err_msg)
                 return self.get_user_moves(species)
 
             self._in_interaction_mode = False
             self._ready_to_send_moves = False
+            self._user_str.set("")
         finally:
             lock.release()
         print(f"sending moves: {self._next_moves}")

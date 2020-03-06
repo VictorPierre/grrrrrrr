@@ -4,10 +4,8 @@ from random import shuffle
 
 from common.logger import logger
 from boutchou.abstract_ai import AbstractSafeAI
-from boutchou.rules import NextMoveRule
 from common.models import Species
-
-WAIT_TIME = 0.61  # in seconds
+from boutchou.rules_sequence import WAIT_TIME
 
 
 class MultiSplitAI(AbstractSafeAI):
