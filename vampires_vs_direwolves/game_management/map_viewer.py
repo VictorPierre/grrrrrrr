@@ -1,16 +1,46 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import enum
 import functools
 import threading
 import tkinter as tk
 from abc import ABC, abstractmethod
 from time import sleep
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from common.logger import logger
-from common.models import Singleton
+from common.models import Singleton, Species
+from game_management.game_monitoring import GameMonitor
 from game_management.rule_checks import check_movements
+
+
+class InfoCategory(enum.Enum):
+    ROUND = 0,
+    GAME = 1,
+    PLAYER = 2,
+    START = 3,
+    WINNER = 4,
+    BATTLE = 5,
+    DETAILS = 6,
+
+
+class InfoFrame(tk.Frame):
+    def __init__(self, master=None, *args, **kwargs):
+        super().__init__(master=master, *args, **kwargs)
+        self._categories = {}
+        for i, category in enumerate(InfoCategory):
+            str_var = tk.StringVar(master=self, value="")
+            label = tk.Label(master=self, textvariable=str_var)
+            label.grid(row=i // 3, column=i % 3)
+            self._categories[category] = (str_var, label)
+
+    def update_info(self, text: str, category: InfoCategory):
+        self._categories[category][0].set(value=text)
+
+    def update_infos(self, infos: Dict[InfoCategory, str]):
+        for category, info in infos.items():
+            self.update_info(info, category)
 
 
 class AbstractMapViewer(metaclass=Singleton):
@@ -31,7 +61,7 @@ class AbstractMapViewer(metaclass=Singleton):
         pass
 
     @abstractmethod
-    def update_info(self, text: str):
+    def update_info(self, text: str, category: InfoCategory):
         pass
 
 
@@ -85,11 +115,12 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
         self._ready_to_send_moves = False
         self._next_moves = []
 
+        self._game_monitor: GameMonitor = None
+
         # Tk variables
         self._window: CustomTk = None
         self._title = None
-        self._info_str: tk.StringVar = None
-        self._info_label: tk.Label = None
+        self._info_frame: InfoFrame = None
         self._canvas: tk.Canvas = None
 
     @property
@@ -108,9 +139,10 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
         # Tk window
         try:
             self._title = self._window.title("Vampires versus Werewolves")
-            self._info_str = tk.StringVar(self._window, value="Loading...")
-            self._info_label = tk.Label(self._window, textvariable=self._info_str)
-            self._info_label.pack()
+
+            self._info_frame = InfoFrame(self._window)
+            self._info_frame.update_infos({InfoCategory.ROUND: "Loading...", InfoCategory.GAME: "Game #0"})
+            self._info_frame.pack()
 
             self._window.bind("<Key>", self._key_callback)
 
@@ -144,7 +176,7 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
 
     @if_is_visible_only
     def stop(self):
-        # WARN: buggy is not called from main thread
+        # WARN: buggy if not called from main thread
         self.close()
         self._is_active = False
         try:
@@ -177,7 +209,7 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
                                      text=str(number),
                                      )
             self._canvas.bind("<Button-1>", self._click_callback)
-        self._info_str.set(f"Update #{self._nb_updates}")
+        self._info_frame.update_info(f"Update #{self._nb_updates}", InfoCategory.ROUND)
         self._nb_updates += 1
         logger.debug("Visualizer updated!")
 
@@ -205,10 +237,24 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
             self._is_active = False
 
     @if_is_visible_only
-    def update_info(self, text: str):
+    def update_info(self, text: str, category: InfoCategory = InfoCategory.ROUND):
         if not self._is_visible:
             return
-        self._info_str.set(value=text)
+        self._info_frame.update_info(text, InfoCategory.ROUND)
+
+    @if_is_visible_only
+    def update_winner(self, winner):
+        if winner is not Species.NONE:
+            self._info_frame.update_info(f"{winner} won!", InfoCategory.WINNER)
+
+    @if_is_visible_only
+    def monitor(self, game_monitor: GameMonitor):
+        self._game_monitor = game_monitor
+        if self._is_active:
+            self._info_frame.update_infos({InfoCategory.PLAYER: game_monitor.players,
+                                           InfoCategory.START: game_monitor.starting_species,
+                                           InfoCategory.DETAILS: f"Past results: {game_monitor.summary}",
+                                           })
 
     def _cursor_position_to_map_position(self, cursor_position):
         x, y = cursor_position

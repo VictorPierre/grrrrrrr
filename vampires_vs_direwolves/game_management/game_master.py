@@ -1,83 +1,21 @@
 # -*- coding: utf-8 -*-
 import socket
-from collections import Counter
 from threading import Thread
+from time import sleep
 from typing import Dict, Any, List, Tuple
 
 from common.logger import logger
 from battle_computer.battle_computer import BattleComputer
 from common.exceptions import TooMuchConnections, PlayerCheatedException, PlayerTimeoutError
 from common.models import Species, DataType, PlayerCommand
-from common.xml_map_parser import XMLMapParser
 from game_management.game_map import ServerGameMap
+from game_management.game_monitoring import GameMonitor
 from game_management.map_viewer import MapViewer
 from game_management.rule_checks import check_movements
 from server_connection.game_server import GameServer
 from server_connection.server_models import ServerCommunication, AbstractWorker
 
-
-class GameMonitor:
-    """Class to record game details"""
-
-    def __init__(self):
-        self._server_config = None
-
-        self._game_parameters = None
-        self._game_counter = None
-        self._players = None
-        self._game_details = None
-        self._all_games = []
-        self.reset()
-
-    @staticmethod
-    def _get_summary(ls):
-        return Counter(ls).most_common(len(Species))
-
-    @property
-    def summary(self):
-        return self._get_summary(self._game_counter)
-
-    @property
-    def global_summary(self):
-        return [self._get_summary(ls) for ls in self._all_games]
-
-    def __len__(self):
-        return len(self._game_counter)
-
-    def add_server_config(self, **kwargs):
-        self._server_config = kwargs
-
-    def add_game(self, **kwargs):
-        self._game_parameters.update(kwargs)
-        logger.info(f"Game parameters: {kwargs}")
-
-    def add_player(self, name, species):
-        self._players.append(dict(name=name, species=species))
-
-    def append(self, winning_species: Species, starting_species: Species, nb_rounds: int):
-        self._game_counter.append(winning_species)
-        self._game_details.append({"starting_species": starting_species,
-                                   "nb_rounds": nb_rounds,
-                                   "winner": winning_species})
-
-    def reset(self):
-        self._game_parameters = {}
-        self._game_counter = []
-        self._players = []
-        self._game_details = []
-        self._all_games.append({"parameters": self._game_parameters, "players": self._players,
-                                "results": self._game_counter, "details": self._game_details})
-
-    def __str__(self):
-        res = f"Game monitor (server: {self._server_config}):\n"
-        # f"Game map: {self._game_parameters}\n"
-        for i, game in enumerate(self._all_games):
-            res += f"Game set #{i} summary: " \
-                   f"Parameters: {game['parameters']}" \
-                   f"Players: {game['players']}\n" \
-                   f"Results: {self._get_summary(game['results'])}\n" \
-                   f"Details: {game['details']}\n"""
-        return res
+WAIT_TIME = 1  # Between two games
 
 
 class GameMasterWorker(AbstractWorker):
@@ -92,7 +30,8 @@ class GameMasterWorker(AbstractWorker):
         self._map_path = map_path
 
         self._server: GameServer = None
-        self._game_map = ServerGameMap()
+        self._game_monitor = GameMonitor()
+        self._game_map = ServerGameMap(self._game_monitor)
         self._starting_species = Species.VAMPIRE
 
         self._loop_thread = None
@@ -100,7 +39,6 @@ class GameMasterWorker(AbstractWorker):
 
         self._players: Dict[socket.socket, Dict[str, Any]] = {}
         self._init_threads = []
-        self._game_monitor = GameMonitor()
         self._updates: List[List[Tuple[int, int, int, int, int]]] = []
 
         self._is_active = False
@@ -224,13 +162,7 @@ class GameMasterWorker(AbstractWorker):
     # #### GAME LOGIC ####
 
     def _check_winner(self) -> Species:
-        vampires_pos = self._game_map.find_species_position(Species.VAMPIRE)
-        werewolves_pos = self._game_map.find_species_position(Species.WEREWOLF)
-        if not len(vampires_pos):
-            return Species.WEREWOLF
-        if not len(werewolves_pos):
-            return Species.VAMPIRE
-        return Species.NONE
+        return self._game_map.winning_species
 
     def _play_one_species(self, player_connection):
         ServerCommunication.empty_socket(player_connection)
@@ -300,7 +232,7 @@ class GameMasterWorker(AbstractWorker):
 
         if has_won is Species.NONE or len(self._game_monitor) < self._max_nb_games:
             logger.info(f"Starting a new game (#{len(self._game_monitor)})!")
-            # sleep(0.1)
+            sleep(WAIT_TIME)
             self.reinit_game()
         else:
             logger.info(f"No more game to play! Summary of past games: {self._game_monitor.summary}")

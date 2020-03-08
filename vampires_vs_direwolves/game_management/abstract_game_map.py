@@ -132,6 +132,18 @@ class AbstractGameMap(ABC):
         return bool(len(self.find_species_position(Species.VAMPIRE))
                     * len(self.find_species_position(Species.WEREWOLF)))
 
+    @property
+    def winning_species(self) -> Species:
+        vampires_pos = self.find_species_position(Species.VAMPIRE)
+        werewolves_pos = self.find_species_position(Species.WEREWOLF)
+        if not len(vampires_pos):
+            winner = Species.WEREWOLF
+        elif not len(werewolves_pos):
+            winner = Species.VAMPIRE
+        else:
+            winner = Species.NONE
+        return winner
+
     def close(self):
         pass
 
@@ -153,6 +165,12 @@ class AbstractGameMapWithVisualizer(AbstractGameMap, ABC):
         """
         super().update(ls_updates)
         self._map_viewer.update(ls_updates)
+
+    @property
+    def winning_species(self) -> Species:
+        winner = super().winning_species
+        self._map_viewer.update_winner(winner)
+        return winner
 
     def close(self):
         self._map_viewer.close()
