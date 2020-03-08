@@ -11,6 +11,7 @@ from game_management.map_helpers import get_first_species_position_and_number
 
 class AbstractAI(ABC):
     """Base class for AI"""
+    _inst = None  # for external use
 
     def __init__(self):
         # noinspection PyTypeChecker
@@ -26,6 +27,13 @@ class AbstractAI(ABC):
     @abstractmethod
     def generate_move(self) -> List[Tuple[int, int, int, int, int]]:
         pass
+
+    @classmethod
+    def next_move(cls, game_map: AbstractGameMap, species: Species):
+        cls._inst = cls._inst or cls()
+        cls._inst.load_map(game_map)
+        cls._inst.load_species(species)
+        return cls._inst.generate_move()
 
 
 class AbstractSafeAI(AbstractAI, ABC):

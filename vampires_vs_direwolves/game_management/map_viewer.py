@@ -7,10 +7,12 @@ import threading
 import tkinter as tk
 from abc import ABC, abstractmethod
 from time import sleep
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Type
 
+from boutchou import RandomAI, AbstractAI, RushToHumansAI, RushToOpponentAI
 from common.logger import logger
 from common.models import Singleton, Species
+from game_management.abstract_game_map import AbstractGameMap
 from game_management.game_monitoring import GameMonitor
 from game_management.rule_checks import check_movements
 
@@ -104,7 +106,7 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
         self._is_visible = False  # False means the map viewer is totally inactive
         self._is_active = None  # True when the window is ok, False on error or if it is not loaded
         self._to_be_refreshed = True  # True to force a refresh, False to update the screen
-        self._game_map = None
+        self._game_map: AbstractGameMap = None
 
         self._height = height
         self._width = width
@@ -116,6 +118,7 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
         self._next_moves = []
 
         self._game_monitor: GameMonitor = None
+        self._current_species = Species.NONE
 
         # Tk variables
         self._window: CustomTk = None
@@ -269,29 +272,64 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
         cell_position = self._cursor_position_to_map_position((event.x, event.y))
         print(f"clicked at {cell_position}")
         if not self._next_moves or self._next_moves[-1][3] != -1:
+            if cell_position not in self._game_map.find_species_position(self._current_species):
+                self._user_str.set(f"Invalid departure {cell_position}!")
+                return
             print("new move source")
-            self._next_moves.append([*cell_position, 0, -1, -1])
+            nb = self._game_map.get_cell_species_count(cell_position, self._current_species)
+            self._next_moves.append([*cell_position, nb, -1, -1])
         else:
             print("new move dest")
             self._next_moves[-1][3:] = cell_position
         print(f"moves: {self._next_moves}")
         self._user_str.set(f"Moves: {self._next_moves}")
 
+    def _generate_move_from_ai(self, ai: Type[AbstractAI]):
+        self._next_moves.clear()
+        self._next_moves += ai.next_move(self._game_map, self._current_species)
+
     def _key_callback(self, event):
         if not self._in_interaction_mode:
             logger.warning("It's not your turn to play !")
             return
         print(f"key pressed: {event}")
-        if event.keycode == 13:  # Return key
+        if event.keysym == "Return":  # Return key
             print("enter: send moves")
             self._ready_to_send_moves = True
-        elif event.keycode == 8:  # backspace
+        elif event.keysym == "Backspace":  # backspace
             print("backspace: reset moves")
             self._next_moves.clear()
-        elif event.keysym in "0123456789":
-            number = int(event.keysym)
+        elif event.keysym == "h":
+            print("move to humans")
+            self._generate_move_from_ai(RushToHumansAI)
+        elif event.keysym == "H":
+            print("move to humans")
+            self._generate_move_from_ai(RushToHumansAI)
+            print("enter: send moves")
+            self._ready_to_send_moves = True
+        elif event.keysym == "o":
+            print("move to opponent")
+            self._generate_move_from_ai(RushToOpponentAI)
+        elif event.keysym == "O":
+            print("move to opponent")
+            self._generate_move_from_ai(RushToOpponentAI)
+            print("enter: send moves")
+            self._ready_to_send_moves = True
+        elif event.keysym == "r":
+            print("random move")
+            self._generate_move_from_ai(RandomAI)
+        elif event.keysym == "R":
+            print("random move")
+            self._generate_move_from_ai(RandomAI)
+            print("enter: send moves")
+            self._ready_to_send_moves = True
+        elif len(event.char) == 1 and event.char in "0123456789":
+            number = int(event.char)
             print(f"number {number}")
             if self._next_moves:
+                _curr_nb = self._game_map.get_cell_species_count(self._next_moves[-1][:2], self._current_species)
+                if self._next_moves[-1][2] >= _curr_nb:
+                    self._next_moves[-1][2] = 0
                 self._next_moves[-1][2] = self._next_moves[-1][2] * 10 + number
             print(f"moves: {self._next_moves}")
         else:
@@ -311,6 +349,7 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
         lock = threading.Lock()
         lock.acquire()
         try:
+            self._current_species = species
             self._in_interaction_mode = True
             if not self._user_block_is_packed:
                 self._pack_user_ints()

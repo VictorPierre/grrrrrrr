@@ -5,8 +5,8 @@ import numpy as np
 
 from common.logger import logger
 from common.models import Singleton, Species
-from game_management.abstract_game_map import (AbstractGameMap,
-                                               AbstractGameMapWithVisualizer)
+from game_management.abstract_game_map import AbstractGameMap
+from game_management.abstract_game_map_with_visualizer import AbstractGameMapWithVisualizer
 
 
 class GameMap(AbstractGameMap):
