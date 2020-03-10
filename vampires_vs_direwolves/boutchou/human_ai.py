@@ -1,32 +1,47 @@
 from boutchou.abstract_ai import AbstractAI
+from flask import Flask, render_template, request
+from threading import Thread
+import os
+from time import sleep
 
 
 class HumanAI(AbstractAI):
 
+    def __init__(self):
+        super().__init__()
+        #create web app
+        self.__create_web_app()
+        #Lauch web app
+        server = Thread(target=self.app.run)
+        server.start()
+
+        self._move_is_ready = False
+        self.moves=[]
+
+    def __create_web_app(self):
+        template_dir = os.path.abspath('../web_interface')
+        self.app = Flask(__name__, template_folder=template_dir, static_folder=template_dir+'/static',)
+        
+        @self.app.route('/')
+        def index():
+            return render_template('index.html', map = self._map)
+        
+        @self.app.route('/load_map')
+        def load_map():
+            return render_template('map.html', map = self._map)
+
+        @self.app.route('/submit', methods = ['POST'])
+        def submit():
+            self._move_is_ready = True
+            data = request.get_json()
+            self.moves = [tuple(x) for x in data["moves"]]
+            return 'ok'
+        
+
     def generate_move(self):
-
-        moves = []
-        species_positions = self._map.find_species_position(self._species)
-        old_position = species_positions[0]
-        number = self._map.get_cell_species_count(old_position, self._species)
-        if not species_positions:
-            return None
-        print(f"you have {number} units in {old_position}")
-        while True:
-
-            stri = input('type move here \n')
-            if stri == 'end':
-                break
-            else:
-                try:
-                    move = tuple(map(int, stri.split(' ')))
-                    moves.append(move)
-                    assert len(move) == 5
-                except Exception as e:
-                    print(e)
-                    print('a move is composed of 5 integers')
-                    print('to finish playing type end')
-        if not moves:
-            moves = [(*old_position, number, *old_position)]
-        print(moves)
-        return moves
+        self._move_is_ready = False
+        self.moves=[]
+        print('Waiting for a move')
+        while not self._move_is_ready:
+            sleep(1)
+        return self.moves

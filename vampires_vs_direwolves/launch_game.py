@@ -8,7 +8,7 @@ from boutchou import *
 if __name__ == '__main__':
 
     ##Launch server
-    MapViewer().set_visible(True)
+    MapViewer().set_visible(False)
     game_master = GameMasterWorker(nb_players=2, max_rounds=100, max_nb_games=2, auto_restart=-1)
     game_master.start()
     sleep(1)
