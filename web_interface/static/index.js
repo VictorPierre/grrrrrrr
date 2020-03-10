@@ -1,18 +1,8 @@
 $( document ).ready(function() {
-    //init toggle button (Options)
+    refresh();
+
     $("#reset_button").on('click', function() {
-        $.ajax({
-            type: "GET",
-            url: "/load_map",
-            success : function(response, status){
-                $("#map").html(response);
-                init_map();
-                moves=[];
-            },
-            error : function(response, status, error){
-                $("#map").html(response)
-            }
-        });
+        refresh();
     });
 
     $("#submit_button").on('click', function() {
@@ -24,9 +14,12 @@ $( document ).ready(function() {
             data: JSON.stringify({ "moves": moves}),
             success : function(response, status){
                 console.log(response);
+                setTimeout(refresh, 1000);
             },
             error : function(response, status, error){
+                console.log(error);
                 console.log(response);
+                setTimeout(refresh, 1000);
             }
         });
     });
@@ -34,6 +27,21 @@ $( document ).ready(function() {
 
 
 var moves = []
+
+var refresh = function(){
+    $.ajax({
+        type: "GET",
+        url: "/load_map",
+        success : function(response, status){
+            $("#map").html(response);
+            init_map();
+            moves=[];
+        },
+        error : function(response, status, error){
+            $("#map").html(response)
+        }
+    });
+}
 
 var init_map = function(){
 
