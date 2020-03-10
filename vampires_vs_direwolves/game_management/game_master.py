@@ -1,65 +1,37 @@
 # -*- coding: utf-8 -*-
 import socket
-from collections import Counter
 from threading import Thread
+from time import sleep
 from typing import Dict, Any, List, Tuple
 
 from common.logger import logger
 from battle_computer.battle_computer import BattleComputer
 from common.exceptions import TooMuchConnections, PlayerCheatedException, PlayerTimeoutError
 from common.models import Species, DataType, PlayerCommand
-from common.xml_map_parser import XMLMapParser
 from game_management.game_map import ServerGameMap
+from game_management.game_monitoring import GameMonitor
 from game_management.map_viewer import MapViewer
 from game_management.rule_checks import check_movements
 from server_connection.game_server import GameServer
 from server_connection.server_models import ServerCommunication, AbstractWorker
 
-try:
-    N, M, UPDATES = XMLMapParser().read_xml_map()
-except Exception as _err:
-    logger.warning("Failed to load XML map")
-    logger.exception(_err)
-    N, M, UPDATES = 5, 5, [(0, 2, 0, 10, 0), (3, 2, 0, 0, 10)]
-
-
-class GameMonitor:
-    def __init__(self):
-        self._game_counter = []
-        self._all_games = [self._game_counter]
-
-    @staticmethod
-    def _get_summary(ls):
-        return Counter(ls).most_common(len(Species))
-
-    @property
-    def summary(self):
-        return self._get_summary(self._game_counter)
-
-    @property
-    def global_summary(self):
-        return [self._get_summary(ls) for ls in self._all_games]
-
-    def __len__(self):
-        return len(self._game_counter)
-
-    def append(self, winning_species: Species):
-        self._game_counter.append(winning_species)
-
-    def reset(self):
-        self._game_counter = []
-        self._all_games.append(self._game_counter)
+WAIT_TIME = 1  # Between two games
 
 
 class GameMasterWorker(AbstractWorker):
-    def __init__(self, nb_players: int, max_rounds: int, max_nb_games: int, auto_restart: int = 0):
+    """Game master including a server"""
+
+    def __init__(self, nb_players: int, max_rounds: int, max_nb_games: int, auto_restart: int = 0, map_path: str = ""):
         self._nb_players = nb_players
         self._max_rounds = max_rounds
         self._max_nb_games = max_nb_games
         self._auto_restart = auto_restart  # if negative, infinity loop
 
+        self._map_path = map_path
+
         self._server: GameServer = None
-        self._game_map = ServerGameMap()
+        self._game_monitor = GameMonitor()
+        self._game_map = ServerGameMap(self._game_monitor)
         self._starting_species = Species.VAMPIRE
 
         self._loop_thread = None
@@ -67,7 +39,6 @@ class GameMasterWorker(AbstractWorker):
 
         self._players: Dict[socket.socket, Dict[str, Any]] = {}
         self._init_threads = []
-        self._game_monitor = GameMonitor()
         self._updates: List[List[Tuple[int, int, int, int, int]]] = []
 
         self._is_active = False
@@ -89,6 +60,9 @@ class GameMasterWorker(AbstractWorker):
     def get_player_name(self, connection):
         return f"{self._players[connection]['name']} ({self._players[connection]['species'].name})"
 
+    def change_map_path(self, path: str):
+        self._map_path = path
+
     # #### COMMANDS TO RECEIVE ####
     # Receive commands from connections
 
@@ -97,6 +71,7 @@ class GameMasterWorker(AbstractWorker):
         n = ServerCommunication.receive_int(connexion)
         name = ServerCommunication.receive(connexion, nb_bytes=n, expected_type=DataType.STR)
         self._players[connexion]["name"] = name
+        self.game_monitor.add_player(name=name, species=self._players[connexion]['species'])
         logger.info(f"SERVER: Received name '{name}' from connexion!")
 
     @staticmethod
@@ -105,13 +80,22 @@ class GameMasterWorker(AbstractWorker):
 
     def _update_game_map(self, movements: List[Tuple[int, int, int, int, int, int]], species: Species):
         ls_updates = []
+        nb_old_pos = {}
+        nb_new_pos = {}
         for old_x, old_y, nb_move, new_x, new_y in movements:
-            update1 = (old_x, old_y, 0, 0, 0)
-            target_species, target_nb = self._game_map.get_cell_species_and_number((new_x, new_y))
-            res_species, res_nb = self.fight(species, nb_move, target_species, target_nb)
-            update2 = res_species.to_cell((new_x, new_y), res_nb)
-            ls_updates.append(update1)
+            previous_nb = nb_old_pos.get((old_x, old_y), self._game_map.get_cell_species_and_number((old_x, old_y))[1])
+            nb_old_pos[(old_x, old_y)] = previous_nb - nb_move
+            nb_new_pos[(new_x, new_y)] = nb_new_pos.get((new_x, new_y), 0) + nb_move
+
+        for pos, nb in nb_old_pos.items():
+            ls_updates.append(species.to_cell(pos, nb))
+
+        for pos, nb in nb_new_pos.items():
+            target_species, target_nb = self._game_map.get_cell_species_and_number(pos)
+            res_species, res_nb = self.fight(species, nb, target_species, target_nb)
+            update2 = res_species.to_cell(pos, res_nb)
             ls_updates.append(update2)
+
         self._game_map.update(ls_updates)
         self._updates.append(ls_updates)
 
@@ -129,7 +113,7 @@ class GameMasterWorker(AbstractWorker):
         try:
             check_movements(movements, self._game_map, self._players[connexion]["species"])
         except AssertionError as err:
-            logger.error(f"{self._players[connexion]['name']} player cheated!")
+            logger.error(f"{self._players[connexion]['name']} player cheated: {err}")
             raise PlayerCheatedException(self._players[connexion]['name'])
         logger.debug(f"SERVER: Received MOV command!")
 
@@ -178,25 +162,19 @@ class GameMasterWorker(AbstractWorker):
     # #### GAME LOGIC ####
 
     def _check_winner(self) -> Species:
-        vampires_pos = self._game_map.find_species_position(Species.VAMPIRE)
-        werewolves_pos = self._game_map.find_species_position(Species.WEREWOLF)
-        if not len(vampires_pos):
-            return Species.WEREWOLF
-        if not len(werewolves_pos):
-            return Species.VAMPIRE
-        return Species.NONE
+        return self._game_map.winning_species
 
     def _play_one_species(self, player_connection):
         ServerCommunication.empty_socket(player_connection)
         self.upd(player_connection)
 
         try:
-            msg = ServerCommunication.receive_command(player_connection)
+            msg = ServerCommunication.receive_command(player_connection, timeout=self._server.timeout)
             cmd = PlayerCommand.from_string(msg)
             assert cmd is PlayerCommand.MOV, f"Bad command {cmd}"
             self.mov(player_connection)
         except (PlayerCheatedException, AssertionError) as err:
-            logger.warning(err)
+            logger.warning(f"Player {self._players[player_connection]['name']} cheated: {err}")
             return Species.get_opposite_species(self._players[player_connection]["species"])
         except PlayerTimeoutError as err:
             logger.warning(err)
@@ -237,20 +215,24 @@ class GameMasterWorker(AbstractWorker):
         assert isinstance(player_connection_2, socket.socket)
 
         has_won = Species.NONE
+        nb_round = 0
         for _round in range(self._max_rounds):
+            nb_round = _round
             has_won = self._play_one_round(player_connection_1, player_connection_2)
             if has_won is not Species.NONE:
                 break
 
         logger.info(f"Game #{len(self._game_monitor)} ended. Winning species: {has_won}")
-        self._game_monitor.append(self._get_name_from_species(has_won))
+        self._game_monitor.append(winning_species=self._get_name_from_species(has_won),
+                                  starting_species=self._starting_species,
+                                  nb_rounds=nb_round)
 
         for player in self._players:
             self.end(player)
 
         if has_won is Species.NONE or len(self._game_monitor) < self._max_nb_games:
             logger.info(f"Starting a new game (#{len(self._game_monitor)})!")
-            # sleep(0.1)
+            sleep(WAIT_TIME)
             self.reinit_game()
         else:
             logger.info(f"No more game to play! Summary of past games: {self._game_monitor.summary}")
@@ -271,11 +253,19 @@ class GameMasterWorker(AbstractWorker):
         logger.info("Game worker thread started!")
 
     def _init_server(self):
+        self.game_monitor.add_server_config(name="default")
         self._server = GameServer(game_worker=self)
 
-    def _init_game(self, n=N, m=M):
-        self._game_map.load_map(n, m)
-        self._updates = [UPDATES.copy()]
+    def _init_map(self):
+        n, m, updates = self._game_map.get_map_param_from_file(path=self._map_path)
+        self._n = n
+        self._m = m
+        self._init_map_updates = updates
+        self.game_monitor.add_game(file=self._map_path, n=n, m=m, map=updates)
+
+    def _init_game(self):
+        self._game_map.load_map(self._n, self._m)
+        self._updates = [self._init_map_updates.copy()]
         self._game_map.update(self._updates[0])
 
     def _init(self, connexion):
@@ -325,6 +315,7 @@ class GameMasterWorker(AbstractWorker):
                 logger.warning(f"Auto-restarting server ({counter + 1}/{self._auto_restart + 1})...")
                 self._game_monitor.reset()
             self._init_server()
+            self._init_map()
             self._init_game()
             self._is_active = True
             self._server.start()
@@ -338,14 +329,19 @@ class GameMasterWorker(AbstractWorker):
         self._loop_thread = Thread(target=self.loop)
         self._loop_thread.start()
 
+    def stop(self):
+        self._server.stop()
+        self._loop_thread.join(timeout=1)
+
     def join(self):
         self._loop_thread.join()
 
 
 if __name__ == '__main__':
     MapViewer().set_visible(True)
-    game_master = GameMasterWorker(nb_players=2, max_rounds=100, max_nb_games=2, auto_restart=-1)
+    game_master = GameMasterWorker(nb_players=2, max_rounds=100, max_nb_games=2, auto_restart=1)
     game_master.start()
     MapViewer().mainloop()
     game_master.join()
+    print(game_master.game_monitor)
     logger.info("END OF GAME MASTER / SERVER")

@@ -46,6 +46,12 @@ class Species(enum.Enum):
     WEREWOLF = 2
     NONE = 3
 
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
+
     @classmethod
     def from_cell_to_species_and_number(cls, cell: Tuple[int, int, int]) -> (Species, int):
         non_zero_indexes = np.nonzero(cell)
@@ -65,6 +71,7 @@ class Species(enum.Enum):
         return cls.from_cell_to_species_and_number(cell)[0]
 
     def to_cell(self, position: Tuple[int, int], number: int) -> Tuple[int, int, int, int, int]:
+        assert number >= 0
         cell = [*position, 0, 0, 0]
         if self is not Species.NONE:
             cell[2 + self.value] = number

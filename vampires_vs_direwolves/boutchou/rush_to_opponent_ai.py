@@ -1,25 +1,11 @@
 # -*- coding: utf-8 -*-
-from time import sleep
-
-from common.logger import logger
-from boutchou.abstract_ai import  AbstractSafeAI
 from boutchou.rules import NextMoveRule
-from common.exceptions import SpeciesExtinctionException
+from boutchou.rules_sequence import RulesSequence
 
 
-WAIT_TIME = 0.1  # in seconds
-
-
-class RushToOpponentAI(AbstractSafeAI):
+class RushToOpponentAI(RulesSequence):
     """Rush to human groups, then random group, no split, for tests"""
 
-    def _generate_move(self):
-        try:
-            old_position, number = next(self._map.species_position_and_number_generator(self._species))
-        except StopIteration:
-            raise SpeciesExtinctionException(f"{self._species} already extinct!")
-        rules = NextMoveRule(self._map)
-        new_position = rules.move_to_opponent(old_position)
-
-        sleep(WAIT_TIME)  # wait WAIT_TIME second(s)
-        return [(*old_position, number, *new_position)]
+    def __init__(self):
+        super().__init__()
+        self._move_methods = ["move_to_closest_opponent"]

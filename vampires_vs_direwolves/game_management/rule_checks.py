@@ -18,33 +18,34 @@ from collections import defaultdict
 from typing import Tuple, List
 
 from common.models import Species
-from game_management.abstract_game_map import AbstractGameMap
 
 
-def check_movements(movements: List[Tuple[int, int, int, int, int]], game_map: AbstractGameMap, species: Species):
+def check_movements(movements: List[Tuple[int, int, int, int, int]], game_map: 'AbstractGameMap', species: Species):
     assert isinstance(movements, list)  # type
     # rule n°1
-    assert len(movements) >= 1
+    assert len(movements) >= 1, "rule #1"
     _starting_points, _ending_points = defaultdict(int), set()  # for rules
 
     for movement in movements:
-        assert isinstance(movement, tuple)  # type
-        assert len(movement) == 5  # format
+        assert isinstance(movement, (tuple, list)), "bad movement type"  # type
+        assert len(movement) == 5, "bad movement format"  # format
         # table size respected
         assert 0 <= movement[0] < game_map.m  # 0 <= x < nb_columns
         assert 0 <= movement[1] < game_map.n  # 0 <= y < nb_lines
         assert 0 <= movement[3] < game_map.m  # 0 <= x < nb_columns
         assert 0 <= movement[4] < game_map.n  # 0 <= y < nb_lines
         # rule n°2
-        assert game_map.get_cell_species((movement[0], movement[1])) is species
+        assert game_map.get_cell_species((movement[0], movement[1])) is species, "rule #2"
+        # no movement with same departure and destination
+        assert movement[:2] != movement[3:], "movement with same departure and destination"
         # rule n°4
-        assert -1 <= movement[0] - movement[3] <= 1
-        assert -1 <= movement[1] - movement[4] <= 1
+        assert -1 <= movement[0] - movement[3] <= 1, "rule #4, x axis"
+        assert -1 <= movement[1] - movement[4] <= 1, "rule #4, y axis"
         _starting_points[(movement[0], movement[1])] += movement[2]
         _ending_points.add((movement[3], movement[4]))
 
     # rule n°5
-    assert not (_starting_points.keys() & _ending_points)  # rule n°5
+    assert not (_starting_points.keys() & _ending_points), "rule #5"  # rule n°5
     # rule n°3 + rule n°6 + no movement of 0 person
     assert all(0 < nb <= game_map.get_cell_species_count(pos, species)
-               for pos, nb in _starting_points.items())
+               for pos, nb in _starting_points.items()), "rules #3, #6 or movement of 0 person"

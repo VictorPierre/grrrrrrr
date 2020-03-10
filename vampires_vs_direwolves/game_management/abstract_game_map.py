@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Union, Generator
+from typing import List, Tuple, Union, Generator, Set
 
+from common.exceptions import GameMapOverPopulated
 from common.logger import logger
 from common.models import Species
-from game_management.map_viewer import MapViewer
+from common.xml_map_parser import XMLMapParser
 
 
 class AbstractGameMap(ABC):
@@ -14,6 +15,18 @@ class AbstractGameMap(ABC):
         self._n: int = 0  # number of lines
         self._m: int = 0  # number of columns
         self._map_table = None  # map storage
+
+    @staticmethod
+    def get_map_param_from_file(path: str = ""):
+        n, m, updates = XMLMapParser().read_xml_map(path)
+        if sum(upd[2] + upd[3] + upd[4] for upd in updates) >= 256:
+            raise GameMapOverPopulated(f"Too much population in map {path} (>255): {updates}")
+        return n, m, updates
+
+    def load_map_from_file(self, path: str = ""):
+        n, m, updates = self.get_map_param_from_file(path)
+        self.load_map(n, m)
+        self.update([updates])
 
     @abstractmethod
     def load_map(self, n: int, m: int):
@@ -44,11 +57,15 @@ class AbstractGameMap(ABC):
             range_coord = (-1, 2)
         return range_coord
 
-    def get_possible_moves(self, position: Tuple[int, int], force_move: bool = False) -> List[Tuple[int, int]]:
+    def get_possible_moves(self, position: Tuple[int, int], force_move: bool = False,
+                           forbidden_positions: Set[Tuple[int, int]] = None) -> List[Tuple[int, int]]:
         """Return the list of possible moves from a position.
 
-        If force_move, (x,y) is not returned in te list of possibilities.
+        :param position: position tuple (x, y) from which to move
+        :param force_move: if True, (x,y) is not returned in the list of possibilities.
+        :param forbidden_positions: optional set of forbidden position
         """
+        forbidden_positions = forbidden_positions or set()
         x, y = position
         range_x = self._get_move_range(x, self.m)
         range_y = self._get_move_range(y, self.n)
@@ -59,6 +76,7 @@ class AbstractGameMap(ABC):
         if force_move:
             positions_set.difference_update({position})
         assert 4 - int(force_move) <= len(positions_set) <= 9 - int(force_move)
+        positions_set -= forbidden_positions
         return list(positions_set)
 
     @property
@@ -73,14 +91,17 @@ class AbstractGameMap(ABC):
                 yield x, y
 
     @abstractmethod
-    def get_cell_species(self, position: Tuple[int, int]) -> Species:
-        """Given a position, returns the species living in"""
-        pass
-
-    @abstractmethod
     def get_cell_species_and_number(self, position: Tuple[int, int]) -> Tuple[Species, int]:
         """Given a position, returns the tuple with the format: (species in the cell, number of persons)"""
         pass
+
+    def get_cell_species(self, position: Tuple[int, int]) -> Species:
+        """Given a position, returns the species living in"""
+        return self.get_cell_species_and_number(position)[0]
+
+    def get_cell_number(self, position: Tuple[int, int]) -> int:
+        """Given a position, returns the tuple with the format: (species in the cell, number of persons)"""
+        return self.get_cell_species_and_number(position)[1]
 
     @abstractmethod
     def get_cell_species_count(self, position: Tuple[int, int], species: Union[Species, int]) -> int:
@@ -105,27 +126,22 @@ class AbstractGameMap(ABC):
         """Given a species, returns the list of positions and number where this species lives"""
         return list(self.species_position_and_number_generator(species))
 
+    @property
+    def is_game_over(self) -> bool:
+        return bool(len(self.find_species_position(Species.VAMPIRE))
+                    * len(self.find_species_position(Species.WEREWOLF)))
+
+    @property
+    def winning_species(self) -> Species:
+        vampires_pos = self.find_species_position(Species.VAMPIRE)
+        werewolves_pos = self.find_species_position(Species.WEREWOLF)
+        if not len(vampires_pos):
+            winner = Species.WEREWOLF
+        elif not len(werewolves_pos):
+            winner = Species.VAMPIRE
+        else:
+            winner = Species.NONE
+        return winner
+
     def close(self):
         pass
-
-
-class AbstractGameMapWithVisualizer(AbstractGameMap, ABC):
-    def __init__(self):
-        super().__init__()
-        self._map_viewer: MapViewer = MapViewer()  # map visualizer
-
-    @abstractmethod
-    def load_map(self, n: int, m: int):
-        super().load_map(n, m)
-        self._map_viewer.load(self)
-
-    @abstractmethod
-    def update(self, ls_updates: List[Tuple[int, int, int, int, int]]):
-        """Update map given a list of updates from server
-        An update tuple has the following format: (position_x, position_y, nb humans, nb vampires, nb werewolves)
-        """
-        super().update(ls_updates)
-        self._map_viewer.update(ls_updates)
-
-    def close(self):
-        self._map_viewer.close()

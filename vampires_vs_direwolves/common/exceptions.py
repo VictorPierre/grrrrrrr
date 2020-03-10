@@ -9,6 +9,11 @@ class MapCorruptedException(BaseGameException):
     pass
 
 
+class GameMapOverPopulated(BaseGameException):
+    """Too much population for the server (>255, i.e. 1 bit)"""
+    pass
+
+
 class SpeciesExtinctionException(BaseGameException):
     """No more movement possible because species is extinct"""
     pass

@@ -4,11 +4,8 @@ from collections import defaultdict
 from threading import Thread
 from typing import List, Optional, Tuple, Type
 
-from boutchou.abstract_ai import AbstractAI
-from boutchou.boutchou_ai import Boutchou
-from boutchou.default_ai import DefaultAI
-from boutchou.human_ai import HumanAI
-from common.exceptions import GameProtocolException
+from boutchou import *  # import all AIs
+from common.exceptions import GameProtocolException, PlayerTimeoutError
 from common.logger import logger
 from common.models import Command, DataType, Species
 from game_management.abstract_game_map import AbstractGameMap
@@ -33,6 +30,7 @@ class GameManager:
         self._client: Client = Client(config=server_config)
         self._ai: AbstractAI = ai_class()
         self._map: AbstractGameMap = map_class()
+        logger.debug(f"AI: {self._ai.__class__.__name__}, Map type: {self._map.__class__.__name__}")
         self._species: Species = Species.NONE
         # noinspection PyTypeChecker
         self._initial_position: Tuple[int, int] = None
@@ -129,6 +127,7 @@ class GameManager:
         return func()
 
     def _wait_server(self):
+        logger.debug(f"{self._species}: Waiting for server answer...")
         message = self._client.receive()
         command = Command.from_string(message)
         logger.debug(f"{self._name}: Command received: '{command}'")
@@ -148,6 +147,7 @@ class GameManager:
         if command is Command.SET:
             return self._play()
         elif command is Command.BYE:
+            self._client.stop()
             return None
         else:
             raise GameProtocolException(
@@ -159,7 +159,8 @@ class GameManager:
             try:
                 self.start_game()  # NME
                 self._play()
-            except (ConnectionResetError, ConnectionAbortedError, ConnectionRefusedError, TimeoutError) as err:
+            except (ConnectionResetError, ConnectionAbortedError, ConnectionRefusedError, TimeoutError,
+                    PlayerTimeoutError) as err:
                 logger.error(f"Connection error: {err}")
                 logger.exception(err)
         logger.debug(f"{self._name}: GameManager closing...")
@@ -167,8 +168,8 @@ class GameManager:
 
 if __name__ == '__main__':
     while True:
-        player1 = Thread(target=GameManager(player_name="Boutchou", ai_class=DefaultAI).start)
-        player2 = Thread(target=GameManager(player_name="Boss", ai_class=DefaultAI).start)
+        player1 = Thread(target=GameManager(player_name="Boutchou", ai_class=RushToHumansAI).start)
+        player2 = Thread(target=GameManager(player_name="Boss", ai_class=MoveToBestHumans).start)
         player1.start()
         player2.start()
         player1.join()

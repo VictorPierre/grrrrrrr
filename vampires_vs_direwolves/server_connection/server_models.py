@@ -31,7 +31,9 @@ class ServerCommunication:
     @classmethod
     def create_package(cls, arg):
         if isinstance(arg, (int, np.integer)):
-            return int(arg).to_bytes(1, "big", signed=False)
+            if arg >= 256:
+                logger.warning(f"Integer to send is too big: {arg}! It will be replaced by {arg % 256}.")
+            return int(arg % 256).to_bytes(1, "big", signed=False)  # % 256 to ensure only 1 bit is used
         elif isinstance(arg, (tuple, list)):
             package = bytes()
             for sub_arg in arg:
@@ -65,10 +67,11 @@ class ServerCommunication:
         message = bytes()
         t0 = time()
         t1 = t0
-        while len(message) < nb_bytes or (timeout and (t1 - t0) > timeout):
+        while (len(message) < nb_bytes) and (not timeout or ((t1 - t0) < timeout)):
             message += connection.recv(nb_bytes - len(message))
             t1 = time()
-        if timeout and (t1 - t0) > timeout:
+        if timeout and (t1 - t0) >= timeout:
+            logger.error(f"Timeout Error: more than {timeout} s.")
             raise PlayerTimeoutError(connection)
         decoded_command = cls.decode(message, expected_type)
         return decoded_command
@@ -90,7 +93,7 @@ class AbstractServer(ABC):
     def __init__(self, config: dict = None):
         # noinspection PyTypeChecker
         self._sock: socket.socket = None
-        self._config = config or CONFIG
+        self._config = config or CONFIG.copy()
         self._is_active = True
 
     @property
@@ -107,7 +110,7 @@ class AbstractServer(ABC):
 
     @property
     def timeout(self):
-        return self._config.get("timeout", 5)
+        return self._config.get("timeout", 0)
 
     @abstractmethod
     def _connect(self):
@@ -128,6 +131,7 @@ class AbstractServer(ABC):
         self._is_active = False
         if self._sock:
             self._sock.close()
+            logger.debug("Server socket closed")
 
 
 class AbstractWorker(ABC):

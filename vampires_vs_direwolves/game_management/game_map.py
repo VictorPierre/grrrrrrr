@@ -5,8 +5,8 @@ import numpy as np
 
 from common.logger import logger
 from common.models import Singleton, Species
-from game_management.abstract_game_map import (AbstractGameMap,
-                                               AbstractGameMapWithVisualizer)
+from game_management.abstract_game_map import AbstractGameMap
+from game_management.abstract_game_map_with_visualizer import AbstractGameMapWithVisualizer
 
 
 class GameMap(AbstractGameMap):
@@ -69,6 +69,12 @@ class GameMap(AbstractGameMap):
         for i, j in zip(non_zero_tab[0], non_zero_tab[1]):
             yield (j, i), table[i, j]
 
+    @property
+    def is_game_over(self) -> bool:
+        # faster implementation than AbstractGameMap
+        return bool(len(np.nonzero(self._get_species_map(Species.WEREWOLF))[0])
+                    * len(np.nonzero(self._get_species_map(Species.VAMPIRE))[0]))
+
     def update(self, ls_updates: List[Tuple[int, int, int, int, int]]):
         for update in ls_updates:
             x, y = update[1], update[0]
@@ -85,5 +91,11 @@ def compute_new_board(map: AbstractGameMap, move: Tuple[int, int, int, int, int]
 
 
 class ServerGameMap(GameMap, AbstractGameMapWithVisualizer):
-    def __init__(self):
+    def __init__(self, game_monitor=None):
         super().__init__()
+        self._game_monitor = game_monitor
+
+    def update(self, ls_updates: List[Tuple[int, int, int, int, int]]):
+        super().update(ls_updates)
+        self._map_viewer.monitor(self._game_monitor)
+

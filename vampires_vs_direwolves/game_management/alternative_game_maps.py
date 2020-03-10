@@ -8,6 +8,7 @@ from common.models import Species
 from game_management.abstract_game_map import AbstractGameMap
 
 
+# Deprecated: some abstract methods not implemented!
 class NewGameMap(AbstractGameMap):
     """Game map storage is a numpy array: [[[species number (0 to 3), number of persons], ...], ...]
 
@@ -60,6 +61,7 @@ class NewGameMap(AbstractGameMap):
         print(self._map_table)
 
 
+# Deprecated: some abstract methods not implemented!
 class SimpleGameMap(AbstractGameMap):
     """Game map storage is a numpy array: [[[number of humans, number of vampires, number of werewolves], ...], ...]
 

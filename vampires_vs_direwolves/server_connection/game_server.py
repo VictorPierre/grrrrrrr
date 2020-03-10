@@ -23,7 +23,7 @@ class GameServer(Thread, AbstractServer):
         super().__init__()
         # noinspection PyTypeChecker
         self._sock: socket.socket = None
-        self._config = config or CONFIG
+        self._config = config or CONFIG.copy()
         self._game_worker = game_worker
         self._nb_connections = game_worker.nb_players
         self._is_active = True
@@ -51,7 +51,7 @@ class GameServer(Thread, AbstractServer):
                 connection, _client = self._sock.accept()
                 self._game_worker.add(connection)
             except (OSError, IOError) as err:
-                logger.debug(f"Server error: {err}")
+                logger.warning(f"Server error: {err}")
                 # logger.exception(err)
             except TooMuchConnections as err:
                 err_msg = f"Too much connections: {err}"
