@@ -25,8 +25,8 @@ class RulesSequence(AbstractSafeAI):
         rules = NextMoveRule(self._map, self._species)
         new_position = None
         for i, move_method in enumerate(self._move_methods):
-            args = self._methods_args if len(self._methods_args) > i and self._methods_args[i] else tuple()
-            kwargs = self._methods_kwargs if len(self._methods_kwargs) > i and self._methods_kwargs[i] else {}
+            args = self._methods_args[i] if len(self._methods_args) > i and self._methods_args[i] else tuple()
+            kwargs = self._methods_kwargs[i] if len(self._methods_kwargs) > i and self._methods_kwargs[i] else {}
             new_position = getattr(rules, move_method)(old_position, *args, **kwargs)
             if new_position is not None:
                 break
