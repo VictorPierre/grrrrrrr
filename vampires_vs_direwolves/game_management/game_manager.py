@@ -107,7 +107,10 @@ class GameManager:
         logger.info(f"{self._name}: It's our turn !")
         new_movements = self._ai.generate_move()
         if DEBUG_MODE:
-            check_movements(new_movements, self._map, self._species)  # check moves correctness
+            try:
+                check_movements(new_movements, self._map, self._species)  # check moves correctness
+            except AssertionError as err:
+                logger.exception(err)
         self.move(new_movements)  # MOV
         t1 = time.time()
         logger.info(
@@ -176,4 +179,3 @@ if __name__ == '__main__':
         player2.join()
         logger.info("End of program")
         logger.info("Auto-restarting players servers...")
-    

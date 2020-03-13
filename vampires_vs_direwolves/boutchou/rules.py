@@ -4,7 +4,7 @@ from typing import Tuple, List
 from common.logger import logger
 from common.models import Species
 from game_management.abstract_game_map import AbstractGameMap
-from game_management.map_helpers import (get_next_move_to_destination, get_distances_to_a_species)
+from game_management.map_helpers import (get_next_move_to_destination, get_distances_to_a_species, get_direct_distance)
 
 
 class AbstractMoveRules:
@@ -100,3 +100,41 @@ class NextMoveRule(AbstractMoveRules):
         if new_pos not in self._possible_moves.get_possible_moves_without_overcrowded_houses(position):
             return None
         return new_pos
+
+    def _get_accessible_positions(self, position_attacker, position_enemy):
+        """Get accessible positions of enemy if chased by attacker. It's position_attacker turn."""
+        # todo: optimize algorithm with geometrical considerations
+        distance = get_direct_distance(position_attacker, position_enemy)
+        if distance == 1:
+            return []
+        accessible_positions = []
+        for position in self._game_map.positions:
+            # todo: to be optimized
+            if get_direct_distance(position, position_enemy) < get_direct_distance(position, position_attacker):
+                accessible_positions.append(position)
+        return accessible_positions
+
+    def move_to_opponent_if_blocked(self, position):
+        """Move to opponent if you are certain to win (modulo some approximations)"""
+        own_number = self._game_map.get_cell_species_count(position, self._species)
+        enemy_species = Species.get_opposite_species(self._species)
+        enemies = self._game_map.find_species_position_and_number(enemy_species)
+        for enemy_position, enemy_number in enemies:
+            if enemy_number * 1.5 >= own_number:  # too risky to attack
+                continue
+            potential_increased_number = enemy_number
+            for potential_backup_position in self._get_accessible_positions(position, enemy_position):
+                pot_sp, pot_nb = self._game_map.get_cell_species_and_number(potential_backup_position)
+                if pot_sp is Species.HUMAN and enemy_number > pot_nb and True:
+                    potential_increased_number += pot_nb
+                if pot_sp is enemy_species:
+                    potential_increased_number += pot_nb
+                # todo: also take into account own species blocked and that could be converted by the enemy
+                if potential_increased_number * 1.5 >= own_number:
+                    break
+            if potential_increased_number * 1.5 < own_number:  # enemy can not grow enough to win
+                new_pos = get_next_move_to_destination(position, enemy_position)
+                if new_pos in self._possible_moves.get_possible_moves_without_overcrowded_houses(position):
+                    print("Move to opponent if blocked used!")
+                    return new_pos
+        return None
