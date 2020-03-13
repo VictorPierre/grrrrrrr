@@ -21,7 +21,7 @@ class PossibleMoves(AbstractMoveRules):
         return self._game_map.get_possible_moves(position, *args, **kwargs)
 
     def get_possible_moves_without_overcrowded_houses(self, position, *args, **kwargs) -> List[Tuple[int, int]]:
-        possible_moves = self._game_map.get_possible_moves(position, *args, *kwargs)
+        possible_moves = self._game_map.get_possible_moves(position, *args, **kwargs)
         safe_possible_moves = []
         species_nb = self._game_map.get_cell_number(position)
         for move in possible_moves:
