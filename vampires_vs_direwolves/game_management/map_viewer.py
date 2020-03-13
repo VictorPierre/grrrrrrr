@@ -7,9 +7,9 @@ import threading
 import tkinter as tk
 from abc import ABC, abstractmethod
 from time import sleep
-from typing import List, Tuple, Dict, Type
+from typing import Dict, List, Tuple, Type
 
-from boutchou import RandomAI, AbstractAI, RushToHumansAI, RushToOpponentAI
+from boutchou import AbstractAI, RandomAI, RushToHumansAI, RushToOpponentAI
 from common.logger import logger
 from common.models import Singleton, Species
 from game_management.abstract_game_map import AbstractGameMap
@@ -104,7 +104,8 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
 
     def __init__(self, height=500, width=500):
         self._is_visible = False  # False means the map viewer is totally inactive
-        self._is_active = None  # True when the window is ok, False on error or if it is not loaded
+        # True when the window is ok, False on error or if it is not loaded
+        self._is_active = None
         self._to_be_refreshed = True  # True to force a refresh, False to update the screen
         self._game_map: AbstractGameMap = None
 
@@ -135,7 +136,8 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
 
     def _init_map_viewer(self):
         if threading.current_thread().getName() != 'MainThread':
-            logger.warning(f"Tkinter window not in main thread: {threading.current_thread().getName()}!")
+            logger.warning(
+                f"Tkinter window not in main thread: {threading.current_thread().getName()}!")
         if not self._is_active or not self._window.is_active:
             self._window = CustomTk(self)
 
@@ -144,12 +146,14 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
             self._title = self._window.title("Vampires versus Werewolves")
 
             self._info_frame = InfoFrame(self._window)
-            self._info_frame.update_infos({InfoCategory.ROUND: "Loading...", InfoCategory.GAME: "Game #0"})
+            self._info_frame.update_infos(
+                {InfoCategory.ROUND: "Loading...", InfoCategory.GAME: "Game #0"})
             self._info_frame.pack()
 
             self._window.bind("<Key>", self._key_callback)
 
-            self._canvas = tk.Canvas(self._window, width=self._width, height=self._height, bg='gray')
+            self._canvas = tk.Canvas(
+                self._window, width=self._width, height=self._height, bg='gray')
             self._canvas.pack()
 
             self._user_block = tk.Frame(self._window)
@@ -200,19 +204,24 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
         else:
             positions = [(x, y) for x, y, _h, _v, _w in ls_updates]
         for x, y in positions:
-            species, number = self._game_map.get_cell_species_and_number((x, y))
+            species, number = self._game_map.get_cell_species_and_number(
+                (x, y))
             self._canvas.create_rectangle(self._width / self._game_map.m * x,
                                           self._height / self._game_map.n * y,
-                                          self._width / self._game_map.m * (x + 1),
-                                          self._height / self._game_map.n * (y + 1),
+                                          self._width /
+                                          self._game_map.m * (x + 1),
+                                          self._height /
+                                          self._game_map.n * (y + 1),
                                           fill=species.to_color()
                                           )
             self._canvas.create_text(self._width / self._game_map.m * (x + 0.5),
-                                     self._height / self._game_map.n * (y + 0.5),
+                                     self._height /
+                                     self._game_map.n * (y + 0.5),
                                      text=str(number),
                                      )
             self._canvas.bind("<Button-1>", self._click_callback)
-        self._info_frame.update_info(f"Update #{self._nb_updates}", InfoCategory.ROUND)
+        self._info_frame.update_info(
+            f"Update #{self._nb_updates}", InfoCategory.ROUND)
         self._nb_updates += 1
         logger.debug("Visualizer updated!")
 
@@ -235,7 +244,8 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
         try:
             self._update(ls_updates)
         except RuntimeError as err:
-            logger.warning(f"Map viewer exception: {err}. Map viewer is now deactivated.")
+            logger.warning(
+                f"Map viewer exception: {err}. Map viewer is now deactivated.")
             logger.exception(err)
             self._is_active = False
 
@@ -269,14 +279,16 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
         if not self._in_interaction_mode:
             logger.warning("It's not your turn to play !")
             return
-        cell_position = self._cursor_position_to_map_position((event.x, event.y))
+        cell_position = self._cursor_position_to_map_position(
+            (event.x, event.y))
         print(f"clicked at {cell_position}")
         if not self._next_moves or self._next_moves[-1][3] != -1:
             if cell_position not in self._game_map.find_species_position(self._current_species):
                 self._user_str.set(f"Invalid departure {cell_position}!")
                 return
             print("new move source")
-            nb = self._game_map.get_cell_species_count(cell_position, self._current_species)
+            nb = self._game_map.get_cell_species_count(
+                cell_position, self._current_species)
             self._next_moves.append([*cell_position, nb, -1, -1])
         else:
             print("new move dest")
@@ -327,7 +339,8 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
             number = int(event.char)
             print(f"number {number}")
             if self._next_moves:
-                _curr_nb = self._game_map.get_cell_species_count(self._next_moves[-1][:2], self._current_species)
+                _curr_nb = self._game_map.get_cell_species_count(
+                    self._next_moves[-1][:2], self._current_species)
                 if self._next_moves[-1][2] >= _curr_nb:
                     self._next_moves[-1][2] = 0
                 self._next_moves[-1][2] = self._next_moves[-1][2] * 10 + number
@@ -337,10 +350,12 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
         self._user_str.set(f"Moves: {self._next_moves}")
 
     def _pack_user_ints(self):
-        self._ints_label = tk.Label(self._user_block, textvariable=self._ints_str)
+        self._ints_label = tk.Label(
+            self._user_block, textvariable=self._ints_str)
         self._ints_label.grid(row=0)
 
-        self._user_label = tk.Label(self._user_block, textvariable=self._user_str)
+        self._user_label = tk.Label(
+            self._user_block, textvariable=self._user_str)
         self._user_label.grid(row=1)
         self._user_block.pack()
         self._user_block_is_packed = True

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-from typing import List, Tuple, Union, Generator
+from typing import Generator, List, Tuple, Union
 
 import numpy as np
 
+from battle_computer.battle_computer import BattleComputer
 from common.logger import logger
 from common.models import Singleton, Species
 from game_management.abstract_game_map import AbstractGameMap
-from game_management.abstract_game_map_with_visualizer import AbstractGameMapWithVisualizer
 
 
 class GameMap(AbstractGameMap):
@@ -26,6 +26,16 @@ class GameMap(AbstractGameMap):
         self._vampire_map = np.zeros((n, m), int)
         self._werewolf_map = np.zeros((n, m), int)
         super().load_map(n, m)
+
+    def load_board(self, n: int, m: int, map_table, human_map, vampire_map, werewolf_map):
+        self._map_table = np.copy(map_table)
+        self._human_map = np.copy(human_map)
+        self._vampire_map = np.copy(vampire_map)
+        self._werewolf_map = np.copy(werewolf_map)
+        super().load_map(n, m)
+
+    def save_board(self):
+        return self.n, self.m, self._map_table, self._human_map, self._vampire_map, self._werewolf_map
 
     def _get_species_map(self, species: Species):
         if species is Species.HUMAN:
@@ -86,16 +96,31 @@ class GameMap(AbstractGameMap):
         super().update(ls_updates)
 
 
-def compute_new_board(map: AbstractGameMap, move: Tuple[int, int, int, int, int]) -> AbstractGameMap:
-    pass
+def compute_new_board(map: GameMap, move: Tuple[int, int, int, int, int]) -> AbstractGameMap:
+    new_map = GameMap().load_board(map.save_board())
 
+    x0, y0, num, x1, y1 = move[1], move[0], move[2], move[4], move[3]
 
-class ServerGameMap(GameMap, AbstractGameMapWithVisualizer):
-    def __init__(self, game_monitor=None):
-        super().__init__()
-        self._game_monitor = game_monitor
+    spec0, n0 = new_map.get_cell_species_and_number(move[:2])
+    assert num <= n0
+    # remove the moving population from former case
+    m0 = new_map._get_species_map(spec0)
+    new_map._map_table[x0, y0, int(spec0)] -= num
+    m0[x0, y0] -= num
 
-    def update(self, ls_updates: List[Tuple[int, int, int, int, int]]):
-        super().update(ls_updates)
-        self._map_viewer.monitor(self._game_monitor)
+    spec1, n1 = new_map.get_cell_species_and_number(move[3:])
 
+    if spec0 != spec1 and n1 > 0:  # fight
+        # remove fighting population from arrival case
+        m1 = new_map._get_species_map(int(spec1))
+        m1[x1, y1] = 0
+        new_map._map_table[x0, y0, int(spec1)] = 0
+        spec, n = BattleComputer((spec0, num), (spec1, n1)
+                                 ).compute_one_battle_result()
+        mfin = new_map._get_species_map(spec)
+        mfin[x1, y1] = n
+        new_map._map_table[x1, y1, int(spec)] = n
+
+    else:
+        m0[x1, y1] += num
+        new_map._map_table[x1, y1, int(spec0)] += num
