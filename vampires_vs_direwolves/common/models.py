@@ -96,6 +96,16 @@ class Species(enum.Enum):
         }
         return eq_color[self]
 
+    def to_string(self):
+        eq_string = {
+            Species.HUMAN: "human",
+            Species.VAMPIRE: "vampire",
+            Species.WEREWOLF: "werewolf",
+            Species.NONE: "none",
+        }
+        return eq_string[self]
+
+
     def get_opposite_species(self):
         if self is Species.WEREWOLF:
             return Species.VAMPIRE
