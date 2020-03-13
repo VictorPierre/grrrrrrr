@@ -21,11 +21,13 @@ WAIT_TIME = 1  # Between two games
 class GameMasterWorker(AbstractWorker):
     """Game master including a server"""
 
-    def __init__(self, nb_players: int, max_rounds: int, max_nb_games: int, auto_restart: int = 0, map_path: str = ""):
+    def __init__(self, nb_players: int, max_rounds: int, max_nb_games: int, auto_restart: int = 0, map_path: str = "",
+                 use_expectation_instead_of_random=False):
         self._nb_players = nb_players
         self._max_rounds = max_rounds
         self._max_nb_games = max_nb_games
         self._auto_restart = auto_restart  # if negative, infinity loop
+        self._use_expectation = use_expectation_instead_of_random
 
         self._map_path = map_path
 
@@ -75,8 +77,9 @@ class GameMasterWorker(AbstractWorker):
         logger.info(f"SERVER: Received name '{name}' from connexion!")
 
     @staticmethod
-    def fight(species_1, number_1, species_2, number_2):
-        return BattleComputer((species_1, number_1), (species_2, number_2)).compute_one_battle_result()
+    def fight(species_1, number_1, species_2, number_2, use_expectation):
+        return BattleComputer((species_1, number_1), (species_2, number_2)).compute_one_battle_result(
+            use_expectation=use_expectation)
 
     def _update_game_map(self, movements: List[Tuple[int, int, int, int, int, int]], species: Species):
         ls_updates = []
@@ -92,7 +95,7 @@ class GameMasterWorker(AbstractWorker):
 
         for pos, nb in nb_new_pos.items():
             target_species, target_nb = self._game_map.get_cell_species_and_number(pos)
-            res_species, res_nb = self.fight(species, nb, target_species, target_nb)
+            res_species, res_nb = self.fight(species, nb, target_species, target_nb, self._use_expectation)
             update2 = res_species.to_cell(pos, res_nb)
             ls_updates.append(update2)
 
