@@ -54,7 +54,7 @@ var init_map = function(){
         init_map()
     });
 
-    $(".vampire").on('click', function() {
+    $("."+specie).on('click', function() {
         $(this).addClass('selected');
         propose_moves(this);
     });

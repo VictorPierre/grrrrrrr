@@ -176,3 +176,4 @@ if __name__ == '__main__':
         player2.join()
         logger.info("End of program")
         logger.info("Auto-restarting players servers...")
+    

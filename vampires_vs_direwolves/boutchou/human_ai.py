@@ -28,7 +28,7 @@ class HumanAI(AbstractAI):
         
         @self.app.route('/load_map')
         def load_map():
-            return render_template('map.html', map = self._map)
+            return render_template('map.html', map = self._map, specie = self._species.to_string())
 
         @self.app.route('/submit', methods = ['POST'])
         def submit():
