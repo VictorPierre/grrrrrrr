@@ -85,6 +85,15 @@ class GameMap(AbstractGameMap):
         return bool(len(np.nonzero(self._get_species_map(Species.WEREWOLF))[0])
                     * len(np.nonzero(self._get_species_map(Species.VAMPIRE))[0]))
 
+    def game_over(self) -> Tuple[bool, Species]:
+        # also returns the winning specie
+        if not np.sum(self._vampire_map):
+            return True, Species.WEREWOLF
+        elif not np.sum(self._werewolf_map):
+            return True, Species.VAMPIRE
+        else:
+            return False, None
+
     def update(self, ls_updates: List[Tuple[int, int, int, int, int]]):
         for update in ls_updates:
             x, y = update[1], update[0]
@@ -97,9 +106,13 @@ class GameMap(AbstractGameMap):
 
 
 def compute_new_board(map: GameMap, move: Tuple[int, int, int, int, int]) -> AbstractGameMap:
-    new_map = GameMap().load_board(map.save_board())
+    new_map = GameMap()
+    #print('MAAAAAAAAP', map._map_table, move)
+    new_map.load_board(*map.save_board())
 
-    x0, y0, num, x1, y1 = move[1], move[0], move[2], move[4], move[3]
+    y0, x0, num, y1, x1 = move[0], move[1], move[2], move[3], move[4]
+    # print(x0, y0, new_map.n, new_map.m)
+    # print(new_map._map_table[x0, y0])
 
     spec0, n0 = new_map.get_cell_species_and_number(move[:2])
     assert num <= n0
@@ -112,15 +125,21 @@ def compute_new_board(map: GameMap, move: Tuple[int, int, int, int, int]) -> Abs
 
     if spec0 != spec1 and n1 > 0:  # fight
         # remove fighting population from arrival case
-        m1 = new_map._get_species_map(int(spec1))
+        m1 = new_map._get_species_map(spec1)
+        #print('M1111111111111111111111', m1, spec1)
         m1[x1, y1] = 0
-        new_map._map_table[x0, y0, int(spec1)] = 0
+        # print(spec0, n0, 'VERSSUUUUUUUUS', spec1, n1)
+        new_map._map_table[x1, y1, int(spec1)] = 0
         spec, n = BattleComputer((spec0, num), (spec1, n1)
                                  ).compute_one_battle_result()
-        mfin = new_map._get_species_map(spec)
-        mfin[x1, y1] = n
-        new_map._map_table[x1, y1, int(spec)] = n
+        # print('WINNNNNNNNNNER', spec, n)
+        if n > 0:
+            # there is survivors
+            mfin = new_map._get_species_map(spec)
+            mfin[x1, y1] = n
+            new_map._map_table[x1, y1, int(spec)] = n
 
     else:
         m0[x1, y1] += num
         new_map._map_table[x1, y1, int(spec0)] += num
+    return new_map

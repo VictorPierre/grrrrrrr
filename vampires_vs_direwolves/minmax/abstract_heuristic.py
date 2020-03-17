@@ -31,8 +31,17 @@ class NumberAndDistanceHeuristic(AbstractHeuristic):
         nb_vamp = np.sum(game_map._vampire_map)
         nb_wolves = np.sum(game_map._werewolf_map)
 
-        pos_vamp = next(game_map.species_position_generator(Species.VAMPIRE))
-        pos_wolv = next(game_map.species_position_generator(Species.WEREWOLF))
+        try:
+            pos_vamp = next(
+                game_map.species_position_generator(Species.VAMPIRE))
+        except StopIteration:
+            # no more vampires on the map
+            return -1e6 if specie == Species.VAMPIRE else 1e6
+        try:
+            pos_wolv = next(
+                game_map.species_position_generator(Species.WEREWOLF))
+        except StopIteration:
+            return 1e6 if specie == Species.VAMPIRE else -1e6
 
         dist_vamp_to_humans = get_distances_to_a_species(pos_vamp, game_map)
         dist_v = 0
@@ -42,6 +51,7 @@ class NumberAndDistanceHeuristic(AbstractHeuristic):
                 dist_vamp_to_humans[key][1]
 
         dist_wolv_to_humans = get_distances_to_a_species(pos_wolv, game_map)
+
         dist_w = 0
         for key in dist_wolv_to_humans:
             # for each cell of human, add number of humans * distance to werewolf cell
@@ -49,6 +59,7 @@ class NumberAndDistanceHeuristic(AbstractHeuristic):
                 dist_wolv_to_humans[key][1]
 
         res = (nb_vamp - nb_wolves) * self._num_factor \
-            + (dist_w - dist_v) * self._dist_factor
+            + (dist_w - dist_v) * self._dist_factor - 0.001 * \
+            get_direct_distance(pos_vamp, pos_wolv) * (nb_vamp - nb_wolves)
 
         return res if specie == Species.VAMPIRE else -res

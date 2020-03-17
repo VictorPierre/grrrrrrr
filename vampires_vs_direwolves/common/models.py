@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
+
 import enum
-import numpy as np
 from typing import Tuple
 
-from common.exceptions import MapCorruptedException, IncorrectSpeciesException, IncorrectCommandException
+import numpy as np
+
+from common.exceptions import (IncorrectCommandException,
+                               IncorrectSpeciesException,
+                               MapCorruptedException)
 from common.logger import logger
 
 
@@ -40,7 +44,7 @@ class PlayerCommand(_Command):
     MOV = "mov"
 
 
-class Species(enum.Enum):
+class Species(enum.IntEnum):
     HUMAN = 0
     VAMPIRE = 1
     WEREWOLF = 2
@@ -110,5 +114,6 @@ class Singleton(type):
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super(
+                Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]

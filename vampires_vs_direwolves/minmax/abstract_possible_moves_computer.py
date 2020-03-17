@@ -18,7 +18,10 @@ class SimpleMoveComputer(AbstractPossibleMovesComputer):
 
     def compute(self, board: AbstractGameMap, specie):
 
-        pos, num = get_first_species_position_and_number(board, specie)
+        try:
+            pos, num = get_first_species_position_and_number(board, specie)
+        except SpeciesExtinctionException:
+            return []
         n, m = board.n, board.m
 
         moves = np.array([(-1, -1), (-1, 0), (-1, 1), (0, -1),
@@ -26,11 +29,11 @@ class SimpleMoveComputer(AbstractPossibleMovesComputer):
 
         moves += list(pos)
 
-        moves = moves[(moves[:, 0] >= 0) & (moves[:, 0] < n) &
-                      (moves[:, 1] >= 0) & (moves[:, 1] < m)]
+        moves = moves[(moves[:, 0] >= 0) & (moves[:, 0] < m) &
+                      (moves[:, 1] >= 0) & (moves[:, 1] < n)]
 
         res = []
         for new_pos in moves:
             res.append((*pos, num, *new_pos))
-        print('COMPUTEEEEEEEEE NEW MMMOVES!!!!!!!', res)
+        #print('COMPUTEEEEEEEEE NEW MMMOVES!!!!!!!', n, m, res, pos)
         return res
