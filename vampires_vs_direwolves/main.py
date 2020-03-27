@@ -27,10 +27,10 @@ else:
 
 def main():
     from game_management.game_manager import GameManager
-    from boutchou import RushToHumansAI
+    from boutchou import RushToHumansAI, AlphaBetaAI
 
     game_manager = GameManager(
-        server_config=server_config, ai_class=RushToHumansAI)
+        server_config=server_config, ai_class=AlphaBetaAI)
     game_manager.start()
 
     print("End of program")
