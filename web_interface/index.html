@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='index.css') }}">
+    <meta charset="UTF-8">
+    <title>Vampires VS Werewolfes</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/icon.png')}}" />
+</head>
+
+<body>
+    <div id="map"></div>
+    <button type="button" id='reset_button'>Refresh</button>
+    <button type="button" id='submit_button'>Valider</button>
+</body>
+
+<script
+ src="https://code.jquery.com/jquery-3.4.1.min.js"
+ integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+ crossorigin="anonymous"></script>
+<script src = "{{ url_for('static', filename='index.js') }}"> </script>

@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-from typing import Tuple, Dict, List, Union
+from typing import Tuple, Dict, List, Union, Generator
 
+from battle_computer.battle_computer import BattleComputer
 from common.exceptions import SpeciesExtinctionException
 from common.models import Species
 from game_management.abstract_game_map import AbstractGameMap
 
 
 def get_direct_distance(position_1: Tuple[int, int], position_2: Tuple[int, int]):
+    # WARN: direct distance does not ensure that a safe route exists !
     x1, y1 = position_1
     x2, y2 = position_2
     diagonal_distance = min(abs(x2 - x1), abs(y2 - y1))
@@ -16,23 +18,57 @@ def get_direct_distance(position_1: Tuple[int, int], position_2: Tuple[int, int]
     return total_distance
 
 
-def get_distances_to_a_species(position: Tuple[int, int], game_map: AbstractGameMap,
-                               species=Species.HUMAN) -> Dict[Tuple[int, int], Tuple[Tuple[int, int], int]]:
-    species_positions = game_map.find_species_position(species)
+def _get_all_distances_to_a_species(position: Tuple[int, int], game_map: AbstractGameMap,
+                                    species=Species.HUMAN) -> Dict[Tuple[int, int], Tuple[Tuple[int, int], int, int]]:
+    species_positions_and_number = game_map.find_species_position_and_number(species)
     res = {}
-    for species_position in species_positions:
-        res[species_position] = (position, get_direct_distance(position, species_position))
+    for species_position, species_number in species_positions_and_number:
+        res[species_position] = (position, get_direct_distance(position, species_position), species_number)
     return res
 
 
-def get_distances_between_two_species(game_map: AbstractGameMap, species_1: Species,
-                                      species_2=Species.HUMAN) -> Dict[Tuple[int, int], Tuple[Tuple[int, int], int]]:
+def _get_distances_to_a_species_if_victory(position: Tuple[int, int],
+                                           game_map: AbstractGameMap,
+                                           species=Species.HUMAN
+                                           ) -> Dict[Tuple[int, int], Tuple[Tuple[int, int], int, int]]:
+    species_positions_and_number = game_map.find_species_position_and_number(species)
+    res = {}
+    for species_position, species_number in species_positions_and_number:
+        current_species, current_number = game_map.get_cell_species_and_number(position)
+        if BattleComputer((current_species, current_number), (species, species_number)).proba_attacker_wins == 1:
+            res[species_position] = (position, get_direct_distance(position, species_position), species_number)
+    return res
+
+
+def get_distances_to_a_species(position: Tuple[int, int], game_map: AbstractGameMap,
+                               species=Species.HUMAN, only_if_certain_victory=False
+                               ) -> Dict[Tuple[int, int], Tuple[Tuple[int, int], int, int]]:
     """
 
-    :param game_map:
-    :param species_1:
-    :param species_2:
-    :return: {pos_specie_2: (pos_closest_specie_1, distance), ...}
+    :param position: position of departure
+    :param game_map: game map
+    :param species: species
+    :param only_if_certain_victory: if True, only distances with a certain victory are returned
+    :return: {species_position: (position, direct_distance(position<->species_position), species_number), ... }
+    """
+    if only_if_certain_victory:
+        return _get_distances_to_a_species_if_victory(position, game_map, species)
+    else:
+        return _get_all_distances_to_a_species(position, game_map, species)
+
+
+def get_distances_between_two_species(game_map: AbstractGameMap,
+                                      species_1: Species,
+                                      species_2=Species.HUMAN,
+                                      only_if_certain_victory=False
+                                      ) -> Dict[Tuple[int, int], Tuple[Tuple[int, int], int, int]]:
+    """
+
+    :param only_if_certain_victory: if True, only distances with a certain victory are returned
+    :param game_map: game map
+    :param species_1: attacker species
+    :param species_2: defender species
+    :return: {pos_specie_2: (pos_closest_specie_1, distance, species_2_number), ...}
     """
     species_1_pos = game_map.find_species_position(species_1)
 
@@ -42,13 +78,13 @@ def get_distances_between_two_species(game_map: AbstractGameMap, species_1: Spec
     # todo: optimize algorithm
     for i, pos_1 in enumerate(species_1_pos):
         if not i:
-            distances = get_distances_to_a_species(pos_1, game_map, species_2)
+            distances = get_distances_to_a_species(pos_1, game_map, species_2, only_if_certain_victory)
         else:
-            tmp_distances = get_distances_to_a_species(pos_1, game_map, species_2)
-            for pos_2, (_pos, distance) in distances.items():
+            tmp_distances = get_distances_to_a_species(pos_1, game_map, species_2, only_if_certain_victory)
+            for pos_2, (_pos, distance, nb_2) in distances.items():
                 tmp_distance = tmp_distances[pos_2][1]
                 if tmp_distance < distance:
-                    distances[pos_2] = (pos_1, tmp_distance)
+                    distances[pos_2] = (pos_1, tmp_distance, nb_2)
     return distances
 
 
@@ -107,12 +143,19 @@ if __name__ == '__main__':
             else:
                 return [(0, 0), (2, 1)]
 
+        def species_position_generator(self, species: Species) -> Generator:
+            pass
 
-    assert get_distances_to_a_species((0, 0), MockMap(), Species.HUMAN) == {(1, 2): ((0, 0), 2), (3, 3): ((0, 0), 3)}
+        def species_position_and_number_generator(self, species: Species) -> Generator:
+            return [((1, 2), 5), ((3, 3), 2)]
+
+
+    assert get_distances_to_a_species((0, 0), MockMap(), Species.HUMAN) == {(1, 2): ((0, 0), 2, 5),
+                                                                            (3, 3): ((0, 0), 3, 2)}
 
     # Tests for get_distances_between_two_species
-    assert get_distances_between_two_species(MockMap(), Species.VAMPIRE, Species.HUMAN) == {(1, 2): ((2, 1), 1),
-                                                                                            (3, 3): ((2, 1), 2)}
+    assert get_distances_between_two_species(MockMap(), Species.VAMPIRE, Species.HUMAN) == {(1, 2): ((2, 1), 1, 5),
+                                                                                            (3, 3): ((2, 1), 2, 2)}
 
     # Tests for _get_next_coord_to_destination
     assert _get_next_coord_to_destination(1, 4) == 1

@@ -1,0 +1,24 @@
+<table>
+    {%for i in range(map.n)%} 
+        <tr>
+            {%for j in range(map.m)%} 
+                {% set specie, number = map.get_cell_species_and_number((j,i)) %}
+                {% if specie.to_string() == 'none' %}
+                    <td moved=0></td>
+                {% else %}
+                    <td class="{{specie.to_string()}}" value={{number}} moved=0>{{number}}</td>
+                {% endif %}
+            {%endfor%} 
+        </tr>
+    {%endfor%} 
+</table>
+
+<div id='form'>
+    <label for="nb_to_move">Nombre d'unités à déplacer:</label>
+    <input type="number" id="nb_to_move" name="nb_to_move"
+           min="0" max="1000">
+</div>
+
+<script>
+    specie = "{{specie}}"   
+</script>

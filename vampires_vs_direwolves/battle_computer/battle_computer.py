@@ -97,8 +97,11 @@ class BattleComputer:
                             1 - self.proba_attacker_wins)
         return attacker_results, defender_results
 
-    def compute_one_battle_result(self) -> Tuple[Species, int]:
-        """Returns a possible battle result, using a Bernoulli law (victory) and a binomial law (survivors)"""
+    def compute_one_battle_result(self, use_expectation=False) -> Tuple[Species, int]:
+        """Returns a possible battle result, using a Bernoulli law (victory) and a binomial law (survivors)
+
+        :param use_expectation: if True, returns the expected result instead of random result
+        """
         # Fasten the results for trivial battles:
         if self.attacker_specie is self.defender_specie:
             return self.attacker_specie, self.attacker_count + self.defender_count
@@ -109,9 +112,13 @@ class BattleComputer:
                 return self.attacker_specie, self.attacker_count + self.defender_count
             return self.attacker_specie, self.attacker_count
         # Non trivial battles
-        victory = np.random.binomial(n=1, p=self.proba_attacker_wins)
-        expectation = self.get_esperance()[1 - victory][1]
-        nb_survivors = np.random.binomial(n=expectation / self.proba_attacker_wins, p=self.proba_attacker_wins)
+        if use_expectation:
+            victory = self.proba_attacker_wins > 0.5  # WARN: special case 0.5: not correct
+            nb_survivors = self.get_esperance()[1 - victory][1]
+        else:
+            victory = np.random.binomial(n=1, p=self.proba_attacker_wins)
+            expectation = self.get_esperance()[1 - victory][1]
+            nb_survivors = np.random.binomial(n=expectation / self.proba_attacker_wins, p=self.proba_attacker_wins)
         if not nb_survivors:
             winning_species = Species.NONE
         elif victory:

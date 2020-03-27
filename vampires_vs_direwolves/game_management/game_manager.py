@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import time
+from collections import defaultdict
 from threading import Thread
-from typing import List, Tuple, Optional, Type
+from typing import List, Optional, Tuple, Type
 
 from boutchou import *  # import all AIs
 from common.exceptions import GameProtocolException, PlayerTimeoutError
 from common.logger import logger
+from common.models import Command, DataType, Species
 from game_management.abstract_game_map import AbstractGameMap
 from game_management.rule_checks import check_movements
 from server_connection.client import Client
@@ -105,10 +107,14 @@ class GameManager:
         logger.info(f"{self._name}: It's our turn !")
         new_movements = self._ai.generate_move()
         if DEBUG_MODE:
-            check_movements(new_movements, self._map, self._species)  # check moves correctness
+            try:
+                check_movements(new_movements, self._map, self._species)  # check moves correctness
+            except AssertionError as err:
+                logger.exception(err)
         self.move(new_movements)  # MOV
         t1 = time.time()
-        logger.info(f"{self._name}: Sent our moves to server in {t1 - t0}s: {new_movements}")
+        logger.info(
+            f"{self._name}: Sent our moves to server in {t1 - t0}s: {new_movements}")
 
     def map(self):
         self._update()
@@ -147,7 +153,8 @@ class GameManager:
             self._client.stop()
             return None
         else:
-            raise GameProtocolException(f"At the end of a game, server should send SET or BYE, got {command}")
+            raise GameProtocolException(
+                f"At the end of a game, server should send SET or BYE, got {command}")
 
     def start(self):
         is_connected = self._client.connect()

@@ -15,6 +15,7 @@ class AbstractGameMap(ABC):
         self._n: int = 0  # number of lines
         self._m: int = 0  # number of columns
         self._map_table = None  # map storage
+        self._nb_updates = -1
 
     @staticmethod
     def get_map_param_from_file(path: str = ""):
@@ -34,9 +35,11 @@ class AbstractGameMap(ABC):
         assert n > 1 and m > 1
         self._n = n
         self._m = m
+        self._nb_updates = -1
 
     n = property(lambda self: self._n)
     m = property(lambda self: self._m)
+    update_number = property(lambda self: self._nb_updates)
     map_table = property(lambda self: self._map_table)  # WARN: map_table format depends on the class !
 
     @abstractmethod
@@ -44,7 +47,7 @@ class AbstractGameMap(ABC):
         """Update map given a list of updates from server
         An update tuple has the following format: (position_x, position_y, nb humans, nb vampires, nb werewolves)
         """
-        pass
+        self._nb_updates += 1
 
     @staticmethod
     def _get_move_range(coord: int, max_coord: int) -> Tuple[int, int]:
@@ -125,6 +128,10 @@ class AbstractGameMap(ABC):
     def find_species_position_and_number(self, species: Species) -> List[Tuple[Tuple[int, int], int]]:
         """Given a species, returns the list of positions and number where this species lives"""
         return list(self.species_position_and_number_generator(species))
+
+    def count_species(self, species) -> int:
+        # WARN: not optimized: to be overridden
+        return sum(nb for _pos, nb in self.species_position_and_number_generator(species))
 
     @property
     def is_game_over(self) -> bool:

@@ -1,4 +1,4 @@
-# grrrrrrr
+# Projet CS IA : grrrrrrr
 
 ## Requirements
 Python 3.6+ must be installed. 
