@@ -34,6 +34,18 @@ class GameMap(AbstractGameMap):
         self._werewolf_map = np.copy(werewolf_map)
         super().load_map(n, m)
 
+    @property
+    def vampire_map(self):
+        return self._vampire_map
+
+    @property
+    def werewolf_map(self):
+        return self._werewolf_map
+
+    @property
+    def human_map(self):
+        return self._human_map
+
     def save_board(self):
         return self.n, self.m, self._map_table, self._human_map, self._vampire_map, self._werewolf_map
 

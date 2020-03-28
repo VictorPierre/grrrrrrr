@@ -1,11 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-import torch
-import torch.nn as nn
-from torch.autograd import grad
 
-from common.models import Species
 from game_management.game_map import GameMap
 from game_management.map_helpers import *
 
@@ -28,8 +24,8 @@ class NumberAndDistanceHeuristic(AbstractHeuristic):
 
     def evaluate(self, game_map: GameMap, specie: Species):
 
-        nb_vamp = np.sum(game_map._vampire_map)
-        nb_wolves = np.sum(game_map._werewolf_map)
+        nb_vamp = np.sum(game_map.vampire_map)
+        nb_wolves = np.sum(game_map.werewolf_map)
 
         try:
             pos_vamp = next(

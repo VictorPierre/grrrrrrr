@@ -1,7 +1,7 @@
 from typing import List, Type
 
 from common.models import Species
-from game_management.abstract_game_map import AbstractGameMap
+from game_management.game_map import GameMap
 from minmax.abstract_heuristic import AbstractHeuristic
 
 
@@ -19,7 +19,7 @@ class HeuristicGroup(AbstractHeuristic):
         self._heuristics = heuristics
         self._weight = weight
 
-    def evaluate(self, game_map: AbstractGameMap, specie: Species):
+    def evaluate(self, game_map: GameMap, specie: Species):
         """ Evaluate the current map and return a number to score if it's in favour of the specie
         """
         heuristic_result = 0
