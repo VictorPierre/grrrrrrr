@@ -241,7 +241,7 @@ class GameMasterWorker(AbstractWorker):
                 break
 
         logger.info(
-            f"Game #{len(self._game_monitor)} ended. Winning species: {has_won}")
+            f"Game #{len(self._game_monitor)} ended. Winning species: {has_won.name}")
         self._game_monitor.append(winning_species=self._get_name_from_species(has_won),
                                   starting_species=self._starting_species,
                                   nb_rounds=nb_round)

@@ -28,7 +28,7 @@ class GameMonitor:
 
     @property
     def players(self):
-        return " vs. ".join([f"{ele['name']} ({ele['species']})" for ele in self._players])
+        return " vs. ".join([f"{ele['name']} ({ele['species'].name})" for ele in self._players])
 
     @property
     def starting_species(self):

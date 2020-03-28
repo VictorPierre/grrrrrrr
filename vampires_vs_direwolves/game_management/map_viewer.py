@@ -258,7 +258,7 @@ class MapViewer(AbstractMapViewer, metaclass=Singleton):
     @if_is_visible_only
     def update_winner(self, winner):
         if winner is not Species.NONE:
-            self._info_frame.update_info(f"{winner} won!", InfoCategory.WINNER)
+            self._info_frame.update_info(f"{winner.name} won!", InfoCategory.WINNER)
 
     @if_is_visible_only
     def monitor(self, game_monitor: GameMonitor):
