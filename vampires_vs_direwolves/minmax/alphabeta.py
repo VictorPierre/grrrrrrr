@@ -28,10 +28,10 @@ class AlphaBetaSearch:
 
     def compute(self, game_map: AbstractGameMap, specie: Species):
         logger.debug('START SEARCH!!!!!!!!!!!!!!!!!!!!!')
-        # print('NEWWWWWW MAPPP', compute_new_board(
+        # logger.debug('NEWWWWWW MAPPP', compute_new_board(
         #     game_map, (4, 5, 3, 4, 4))._map_table)
         best_move = None
-        best_val = -1e6
+        best_val = -1e6 - 1
 
         other_specie = Species.VAMPIRE if specie == Species.WEREWOLF else Species.WEREWOLF
         # logger.debug(f"{specie.name}, {other_specie.name}")
@@ -41,7 +41,7 @@ class AlphaBetaSearch:
             'alpha': -1e6,
             'beta': 1e6
         }]
-        # print('MOVES STATE 0', states[0]['moves'])
+        logger.debug('MOVES STATE 0', states[0]['moves'])
         # time.sleep(2)
 
         while states:
@@ -53,9 +53,9 @@ class AlphaBetaSearch:
             # state is a leaf
             if depth >= self.depth or s['board'].game_over()[0]:
                 val = self.heuristic.evaluate(s['board'], specie)
-                logger.debug(" ".join(['LEAFFFFFFF', 'VAL', val,
-                                       'OVER', s['alpha'], s['beta'],
-                                       s['board'].game_over()[0]]))
+                logger.debug(" ".join(['LEAFFFFFFF', 'VAL', str(val),
+                                       'OVER', str(s['alpha']), str(s['beta']),
+                                       str(s['board'].game_over()[0])]))
                 # logger.debug(s['board']._map_table)
 
                 states.pop()
@@ -66,8 +66,9 @@ class AlphaBetaSearch:
                     states[-1]['alpha'] = max(s['alpha'], val)
 
                 if depth == 2:
-                    logger.debug(f"Update Best Moveeeeeeeeeee: {best_move} {s['mv']}")
-                    logger.debug(f"best_val {s['beta']}")
+                    logger.debug(
+                        f"Update Best Moveeeeeeeeeee: {best_move} {s['mv']}")
+                    logger.debug(f"best_val {str(s['beta'])}")
                     if s['beta'] > best_val:  # update best move
                         best_move = s['mv']
                         best_val = s['beta']
@@ -77,8 +78,9 @@ class AlphaBetaSearch:
                 logger.debug('PRUNINNNNNNNG')
                 states.pop()
                 if depth == 2:
-                    logger.debug(f"Update Best Moveeeeeeeeeee: {best_move} {s['mv']}")
-                    logger.debug(f"best_val {s['beta']}")
+                    logger.debug(
+                        f"Update Best Moveeeeeeeeeee: {best_move} {s['mv']}")
+                    logger.debug(f"best_val {str(best_val)} {s['beta']}")
                     if s['beta'] > best_val:  # update best move
                         best_move = s['mv']
                         best_val = s['beta']
@@ -95,10 +97,12 @@ class AlphaBetaSearch:
 
                         states[-1]['alpha'] = max(states[-1]
                                                   ['alpha'], s['beta'])
-                    logger.debug(f"UPPPPPP {depth - 1} {states[-1]['alpha']} {states[-1]['beta']}")
+                    logger.debug(
+                        f"UPPPPPP {depth - 1} {states[-1]['alpha']} {states[-1]['beta']}")
                 if depth == 2:
-                    logger.debug(f"Update Best Moveeeeeeeeeee: {best_move} {s['mv']}")
-                    logger.debug(f"best_val {s['beta']}")
+                    logger.debug(
+                        f"Update Best Moveeeeeeeeeee: {best_move} {str(s['mv'])}")
+                    logger.debug(f"best_val {str(best_val)} {str(s['beta'])}")
                     if s['beta'] > best_val:  # update best move
                         best_move = s['mv']
                         best_val = s['beta']
@@ -126,8 +130,9 @@ class AlphaBetaSearch:
                     'beta': s['beta']
                 }
                 if depth == 1:
-                    logger.debug(f'Tesssssssssst Move {move}')
+                    logger.debug(f'Tesssssssssst Move {str(move)}')
                     new_state['mv'] = move,  # remeber the move
                 states.append(new_state)
-        logger.info(f'AlphaBeta result: move: {best_move}  value: {best_val}')
+        logger.info(
+            f'AlphaBeta result: move: {str(best_move)}  value: {str(best_val)}')
         return best_move, best_val
