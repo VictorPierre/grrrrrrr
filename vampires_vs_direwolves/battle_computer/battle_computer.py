@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from typing import Tuple
+
 import numpy as np
 from scipy.stats import binom
 
@@ -26,7 +27,8 @@ class BattleComputer:
         elif self.defender_specie is Species.HUMAN:
             self.__is_random_battle = self.attacker_count < self.defender_count  # strict inequality
         else:
-            self.__is_random_battle = self.attacker_count < 1.5 * self.defender_count  # strict inequality
+            self.__is_random_battle = self.attacker_count < 1.5 * \
+                self.defender_count  # strict inequality
 
     def __validate_battle(self):
         """Ensure that the battle is possible and correct
@@ -35,7 +37,8 @@ class BattleComputer:
         """
         # Attacker and defender are not NONE, and attacker is not HUMAN
         if self.attacker_specie in (Species.NONE, Species.HUMAN):
-            raise InvalidBattleException(f"Attacker is an invalid species: {self.attacker_specie}")
+            raise InvalidBattleException(
+                f"Attacker is an invalid species: {self.attacker_specie}")
 
     @property
     def proba_attacker_wins(self):
@@ -86,7 +89,8 @@ class BattleComputer:
         # Battle
         if self.defender_specie is Species.HUMAN:
             attacker_results = (self.attacker_specie,
-                                self.proba_attacker_wins * (self.attacker_count + self.defender_count),
+                                self.proba_attacker_wins *
+                                (self.attacker_count + self.defender_count),
                                 self.proba_attacker_wins)
         else:
             attacker_results = (self.attacker_specie,
@@ -118,7 +122,8 @@ class BattleComputer:
         else:
             victory = np.random.binomial(n=1, p=self.proba_attacker_wins)
             expectation = self.get_esperance()[1 - victory][1]
-            nb_survivors = np.random.binomial(n=expectation / self.proba_attacker_wins, p=self.proba_attacker_wins)
+            nb_survivors = np.random.binomial(
+                n=expectation / self.proba_attacker_wins, p=self.proba_attacker_wins)
         if not nb_survivors:
             winning_species = Species.NONE
         elif victory:
@@ -126,6 +131,21 @@ class BattleComputer:
         else:
             winning_species = self.defender_specie
         return winning_species, nb_survivors
+
+    def compute_battle_for_minmax(self):
+        p = self.proba_attacker_wins
+        if self.defender_specie == Species.HUMAN:
+            if self.__is_random_battle:
+                return (Species.HUMAN, int(self.defender_count * (1 - p)))
+            else:
+                return self.attacker_specie, int(p*(self.attacker_count + self.defender_count))
+
+        # pessimistic result to have a more careful ia
+        else:
+            if p < 0.6:
+                return self.defender_specie, int(self.defender_count * (1 - p))
+            else:
+                return self.attacker_specie, int(p * self.attacker_count)
 
     def get_all_probabilities(self):
         """return an array with all the possible issues, and their probabilities
@@ -148,7 +168,8 @@ class BattleComputer:
             n_attacker = self.attacker_count
 
         attacker_random_variable = binom(n_attacker, self.proba_attacker_wins)
-        defender_random_variable = binom(self.defender_count, 1 - self.proba_attacker_wins)
+        defender_random_variable = binom(
+            self.defender_count, 1 - self.proba_attacker_wins)
 
         # # attacker victory
         for k in range(1, n_attacker + 1):
@@ -160,13 +181,13 @@ class BattleComputer:
                 [self.defender_specie, k, (1 - self.proba_attacker_wins) * defender_random_variable.pmf(k)])
         # # no survivors
         probabilities.append([Species.NONE, 0, self.proba_attacker_wins * attacker_random_variable.pmf(0) + (
-                1 - self.proba_attacker_wins) * defender_random_variable.pmf(0)])
+            1 - self.proba_attacker_wins) * defender_random_variable.pmf(0)])
 
         return probabilities
 
 
 if __name__ == "__main__":
-    b = BattleComputer((Species.WEREWOLF, 2), (Species.VAMPIRE, 2))
+    b = BattleComputer((Species.WEREWOLF, 2), (Species.HUMAN, 3))
 
     print(b.proba_attacker_wins)
     print(b.get_esperance())
@@ -175,5 +196,7 @@ if __name__ == "__main__":
 
     # Test of compute_one_battle_result method
     print(b.compute_one_battle_result())
+    print(b.compute_battle_for_minmax())
     possibilities = [tuple(ele[:2]) for ele in probabilities]
-    assert all(b.compute_one_battle_result() in possibilities for _ in range(10000))
+    assert all(b.compute_one_battle_result()
+               in possibilities for _ in range(10000))
