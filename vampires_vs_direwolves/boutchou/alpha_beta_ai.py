@@ -9,7 +9,7 @@ class AlphaBetaAI(AbstractAI):
     def __init__(self):
         self.search = AlphaBetaSearch(possible_moves_computer=SimpleMoveComputer,
                                       heuristic=NumberAndDistanceHeuristic,
-                                      depth=3)
+                                      depth=5)
         super().__init__()
 
     def generate_move(self):
