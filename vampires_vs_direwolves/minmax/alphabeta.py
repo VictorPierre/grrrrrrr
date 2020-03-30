@@ -41,7 +41,7 @@ class AlphaBetaSearch:
             'alpha': -1e6,
             'beta': 1e6
         }]
-        logger.debug('MOVES STATE 0', states[0]['moves'])
+        logger.debug(f"MOVES STATE 0 {states[0]['moves']}")
         # time.sleep(2)
 
         while states:
