@@ -2,7 +2,6 @@
 from boutchou.abstract_ai import AbstractAI, AbstractSafeAI
 from boutchou.alpha_beta_ai import AlphaBetaAI
 from boutchou.boutchou_ai import Boutchou
-from boutchou.default_ai import DefaultAI
 from boutchou.human_ai import HumanAI
 from boutchou.multi_split_ai import MultiSplitAI
 from boutchou.random_ai import RandomAI
@@ -16,7 +15,6 @@ __all__ = [
     'AbstractSafeAI',
     'Boutchou',
     'RandomAI',
-    'DefaultAI',
     'RushToHumansAI',
     'MoveToHumanOrMoveToOpponentIfBetter',
     'MoveToBestHumans',

@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 import time
-from collections import defaultdict
 from threading import Thread
-from typing import List, Optional, Tuple, Type
+from typing import List, Tuple, Type
 
 from boutchou import *  # import all AIs
 from common.exceptions import GameProtocolException, PlayerTimeoutError
 from common.logger import logger
-from common.models import Command, DataType, Species
 from game_management.abstract_game_map import AbstractGameMap
 from game_management.rule_checks import check_movements
 from server_connection.client import Client
@@ -25,7 +23,7 @@ class GameManager:
     """
 
     def __init__(self, player_name: str = "Boutchou", server_config: dict = None,
-                 ai_class: Type[AbstractAI] = DefaultAI, map_class: Type[AbstractGameMap] = GameMap):
+                 ai_class: Type[AbstractAI] = Boutchou, map_class: Type[AbstractGameMap] = GameMap):
         self._name: str = player_name
         self._client: Client = Client(config=server_config)
         self._ai: AbstractAI = ai_class()

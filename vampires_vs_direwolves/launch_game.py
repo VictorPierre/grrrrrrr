@@ -21,7 +21,7 @@ if __name__ == '__main__':
     player1 = Thread(target=GameManager(
         player_name="Boutchou", ai_class=AlphaBetaAI).start)
     player2 = Thread(target=GameManager(
-        player_name="Boss", ai_class=DefaultAI).start)
+        player_name="Boss", ai_class=RandomAI).start)
     player1.start()
     player2.start()
     MapViewer().mainloop()
