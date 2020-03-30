@@ -48,9 +48,9 @@ class NumberAndDistanceHeuristic(AbstractHeuristic):
             if game_map.get_cell_species_count(key, Species.HUMAN) <= nb_wolves:
                 dist_w += game_map.get_cell_species_count(key, Species.HUMAN) / \
                     dist_wolv_to_humans[key][1]
-
+        #print('dist v', dist_v, 'dist w', dist_w)
         res = (nb_vamp - nb_wolves) * self._num_factor \
-            + (dist_w - dist_v) * self._dist_factor - 0.001 * \
+            + (dist_v - dist_w) * self._dist_factor - 0.001 * \
             get_direct_distance(pos_vamp, pos_wolv) * (nb_vamp - nb_wolves)
 
         return res if specie == Species.VAMPIRE else -res
