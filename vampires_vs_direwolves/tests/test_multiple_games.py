@@ -51,11 +51,11 @@ class GameComparator:
 
 def multiple_games():
     # Configure your tests here:
-    ais = [RushToHumansAI, MoveToBestHumans]
+    ais = [AlphaBetaAI, AlphaBetaSimple]
     print(os.getcwd())
-    map_paths = ["tests/test_maps/" + ele for ele in os.listdir("tests/test_maps")]
+    map_paths = ["tests/test_maps/" + ele for ele in os.listdir("tests/test_maps") if ele.endswith(".xml")]
     game_comparator = GameComparator(ais, map_paths)
-    game_monitor = game_comparator.test(nb_games=20, only_different_ais=True, show_map=False)
+    game_monitor = game_comparator.test(nb_games=20, only_different_ais=True, show_map=True)
     logger.info(game_monitor)
 
 
