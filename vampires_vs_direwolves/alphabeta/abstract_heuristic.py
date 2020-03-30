@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from common.models import Species
 from game_management.game_map import GameMap
 
 
