@@ -5,13 +5,13 @@ import time
 from copy import copy
 from typing import Type
 
+from alphabeta.abstract_heuristic import AbstractHeuristic
+from alphabeta.abstract_possible_moves_computer import \
+    AbstractPossibleMovesComputer
 from common.logger import logger
 from common.models import Species
 from game_management.abstract_game_map import AbstractGameMap
 from game_management.game_map import compute_new_board
-from alphabeta.abstract_heuristic import AbstractHeuristic
-from alphabeta.abstract_possible_moves_computer import \
-    AbstractPossibleMovesComputer
 
 
 def propagate(alpha_betas, val):
@@ -41,7 +41,7 @@ class AlphaBetaSearch:
             'alpha': -1e6,
             'beta': 1e6
         }]
-        logger.debug(f"MOVES STATE 0 {states[0]['moves']}")
+        # print('MOVES STATE 0', states[0]['moves'])
         # time.sleep(2)
 
         while states:
@@ -53,9 +53,9 @@ class AlphaBetaSearch:
             # state is a leaf
             if depth >= self.depth or s['board'].game_over()[0]:
                 val = self.heuristic.evaluate(s['board'], specie)
-                logger.debug(" ".join(['LEAFFFFFFF', 'VAL', str(val),
-                                       'OVER', str(s['alpha']), str(s['beta']),
-                                       str(s['board'].game_over()[0])]))
+                # logger.debug(" ".join(['LEAFFFFFFF', 'VAL', str(val),
+                #                        'OVER', str(s['alpha']), str(s['beta']),
+                #                        str(s['board'].game_over()[0])]))
                 # logger.debug(s['board']._map_table)
 
                 states.pop()
@@ -66,9 +66,11 @@ class AlphaBetaSearch:
                     states[-1]['alpha'] = max(s['alpha'], val)
 
                 if depth == 2:
+
                     logger.debug(
                         f"Update Best Moveeeeeeeeeee: {best_move} {s['mv']}")
                     logger.debug(f"best_val {str(s['beta'])}")
+
                     if s['beta'] > best_val:  # update best move
                         best_move = s['mv']
                         best_val = s['beta']
