@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from boutchou.abstract_ai import AbstractAI
+from boutchou import AlphaBetaAI
 
 
-class Boutchou(AbstractAI):
-    pass
+class Boutchou(AlphaBetaAI):
+    """Our demoniac AI Boutchou is so sweet that it's going to eat you up!"""
