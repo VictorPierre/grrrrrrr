@@ -31,6 +31,7 @@ class GameServer(Thread, AbstractServer):
     def _connect(self):
         try:
             self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self._sock.bind((self.host, self.port))
         except (socket.error, OSError) as err:
             logger.error(f"Failed to connect to {self.host}:{self.port}")
