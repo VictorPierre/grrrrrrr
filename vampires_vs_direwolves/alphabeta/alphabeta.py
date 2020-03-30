@@ -34,7 +34,8 @@ class AlphaBetaSearch:
         best_val = -1e6 - 1
 
         other_specie = Species.VAMPIRE if specie == Species.WEREWOLF else Species.WEREWOLF
-        # logger.debug(f"{specie.name}, {other_specie.name}")
+        logger.debug(
+            f"SPECC We play the {specie.name}, other plays {other_specie.name}")
         states = [{
             'board': game_map,
             'moves': self.move_computer.compute(game_map, specie),
@@ -48,14 +49,15 @@ class AlphaBetaSearch:
             s = states[-1]
             depth = len(states)
             # logger.debug(f'ENTER WHILEE!!!!!!!!!!!!! {depth}')
-            # if depth <= 3:
-            #     logger.debug('ALPHABETA', s['alpha'], s['beta'], depth)
+            if depth < 2:
+                logger.debug(" ".join(['ALPHABETA', str(
+                    s['alpha']), str(s['beta']), str(depth)]))
             # state is a leaf
             if depth >= self.depth or s['board'].game_over()[0]:
                 val = self.heuristic.evaluate(s['board'], specie)
-                # logger.debug(" ".join(['LEAFFFFFFF', 'VAL', str(val),
-                #                        'OVER', str(s['alpha']), str(s['beta']),
-                #                        str(s['board'].game_over()[0])]))
+                logger.debug(" ".join(['LEAFFFFFFF', 'VAL', str(val),
+                                       'OVER',
+                                       str(s['board'].game_over()[0])]))
                 # logger.debug(s['board']._map_table)
 
                 states.pop()
@@ -67,22 +69,22 @@ class AlphaBetaSearch:
 
                 if depth == 2:
 
-                    logger.debug(
-                        f"Update Best Moveeeeeeeeeee: {best_move} {s['mv']}")
-                    logger.debug(f"best_val {str(s['beta'])}")
+                    # logger.debug(
+                    #     f"Update Best Moveeeeeeeeeee, WIN/LOOSE: {best_move} {str(s['mv'])}")
+                    # logger.debug(f"best_val {str(val)}")
 
-                    if s['beta'] > best_val:  # update best move
+                    if val > best_val:  # update best move
                         best_move = s['mv']
-                        best_val = s['beta']
+                        best_val = val
                     # time.sleep(5)
 
             elif s['alpha'] > s['beta']:  # prune the tree
-                logger.debug('PRUNINNNNNNNG')
+                # logger.debug('PRUNINNNNNNNG')
                 states.pop()
                 if depth == 2:
-                    logger.debug(
-                        f"Update Best Moveeeeeeeeeee: {best_move} {s['mv']}")
-                    logger.debug(f"best_val {str(best_val)} {s['beta']}")
+                    # logger.debug(
+                    #     f"Update Best Moveeeeeeeeeee: {best_move} {s['mv']}")
+                    # logger.debug(f"best_val {str(best_val)} {s['beta']}")
                     if s['beta'] > best_val:  # update best move
                         best_move = s['mv']
                         best_val = s['beta']
@@ -99,12 +101,12 @@ class AlphaBetaSearch:
 
                         states[-1]['alpha'] = max(states[-1]
                                                   ['alpha'], s['beta'])
-                    logger.debug(
-                        f"UPPPPPP {depth - 1} {states[-1]['alpha']} {states[-1]['beta']}")
+                    # logger.debug(
+                    #     f"UPPPPPP {depth - 1} {states[-1]['alpha']} {states[-1]['beta']}")
                 if depth == 2:
-                    logger.debug(
-                        f"Update Best Moveeeeeeeeeee: {best_move} {str(s['mv'])}")
-                    logger.debug(f"best_val {str(best_val)} {str(s['beta'])}")
+                    # logger.debug(
+                    #     f"Update Best Moveeeeeeeeeee: {best_move} {str(s['mv'])}")
+                    # logger.debug(f"best_val {str(best_val)} {str(s['beta'])}")
                     if s['beta'] > best_val:  # update best move
                         best_move = s['mv']
                         best_val = s['beta']
@@ -112,16 +114,16 @@ class AlphaBetaSearch:
 
             else:  # continue exploring the tree
                 move = s['moves'].pop(0)
-                logger.debug(f'EXPLOREEEEEEEE {move}')
+                # logger.debug(f'EXPLOREEEEEEEE {move}')
                 new_board = compute_new_board(s['board'], move)
                 new_moves = []
                 if depth + 1 < self.depth:
                     if depth % 2:  # it will be our turn
-                        logger.debug('other playyys')
+                        # logger.debug('other playyys')
                         new_moves = self.move_computer.compute(
                             new_board, other_specie)
                     else:
-                        logger.debug('We plaayy')
+                        # logger.debug('We plaayy')
                         new_moves = self.move_computer.compute(
                             new_board, specie)
 
