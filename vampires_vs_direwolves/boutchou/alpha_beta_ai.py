@@ -1,7 +1,7 @@
-from boutchou.abstract_ai import AbstractAI
 from alphabeta.abstract_heuristic import NumberAndDistanceHeuristic
 from alphabeta.abstract_possible_moves_computer import SimpleMoveComputer
 from alphabeta.alphabeta import AlphaBetaSearch
+from boutchou.abstract_ai import AbstractAI
 
 
 class AlphaBetaAI(AbstractAI):
@@ -14,5 +14,5 @@ class AlphaBetaAI(AbstractAI):
 
     def generate_move(self):
         move, blaaaaaaaa = self.search.compute(self._map, self._species)
-        print('MOVE!!!!!!!!!!!!!', move, blaaaaaaaa, type(move))
+        #print('MOVE!!!!!!!!!!!!!', move, blaaaaaaaa, type(move))
         return [move[0]]
