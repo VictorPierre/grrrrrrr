@@ -14,7 +14,7 @@ from game_management.abstract_game_map import AbstractGameMap
 from game_management.game_map import compute_new_board
 
 
-class AlphaBetaSearch:
+class AlphaBetaSearch2:
 
     def __init__(self, possible_moves_computer: Type[AbstractPossibleMovesComputer],
                  heuristic: Type[AbstractHeuristic], depth: int):

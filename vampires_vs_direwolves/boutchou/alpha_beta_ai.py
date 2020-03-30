@@ -11,7 +11,7 @@ class AlphaBetaAI(AbstractAI):
     def __init__(self):
         super().__init__()
 
-        self.search = AlphaBetaSearch2(
+        self.search = AlphaBetaSearch(
             possible_moves_computer=SimpleMoveComputer,
             heuristic=NumberAndDistanceHeuristic,
             depth=5,
