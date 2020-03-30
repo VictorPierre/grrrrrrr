@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from game_management.game_map import GameMap
+
 
 class AbstractHeuristic(ABC):
 
