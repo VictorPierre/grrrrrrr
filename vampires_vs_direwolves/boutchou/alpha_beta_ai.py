@@ -1,7 +1,7 @@
 from boutchou.abstract_ai import AbstractAI
-from minmax.abstract_heuristic import NumberAndDistanceHeuristic
-from minmax.abstract_possible_moves_computer import SimpleMoveComputer
-from minmax.alphabeta import AlphaBetaSearch
+from alphabeta.abstract_heuristic import NumberAndDistanceHeuristic
+from alphabeta.abstract_possible_moves_computer import SimpleMoveComputer
+from alphabeta.alphabeta import AlphaBetaSearch
 
 
 class AlphaBetaAI(AbstractAI):

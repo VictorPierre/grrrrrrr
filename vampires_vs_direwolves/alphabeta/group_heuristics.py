@@ -2,7 +2,7 @@ from typing import List, Type
 
 from common.models import Species
 from game_management.game_map import GameMap
-from minmax.abstract_heuristic import AbstractHeuristic
+from alphabeta.abstract_heuristic import AbstractHeuristic
 
 
 class HeuristicGroup(AbstractHeuristic):
