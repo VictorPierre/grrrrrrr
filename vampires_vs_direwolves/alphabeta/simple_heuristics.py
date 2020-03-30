@@ -1,7 +1,7 @@
 from common.logger import logger
 from common.models import Species
 from game_management.abstract_game_map import AbstractGameMap
-from minmax.abstract_heuristic import AbstractHeuristic
+from alphabeta.abstract_heuristic import AbstractHeuristic
 from game_management.map_helpers import get_distances_between_two_species
 
 
