@@ -143,11 +143,19 @@ def compute_new_board(map: GameMap, move: Tuple[int, int, int, int, int]) -> Abs
         m1 = new_map._get_species_map(spec1)
         #print('M1111111111111111111111', m1, spec1)
         m1[x1, y1] = 0
+<<<<<<< HEAD
+        #print(spec0, n0, 'VERSSUUUUUUUUS', spec1, n1)
+        new_map._map_table[x1, y1, int(spec1)] = 0
+        spec, n = BattleComputer((spec0, num), (spec1, n1)
+                                 ).compute_battle_for_minmax()
+        #print('WINNNNNNNNNNER', spec, n)
+=======
         # print(spec0, n0, 'VERSSUUUUUUUUS', spec1, n1)
         new_map._map_table[x1, y1, int(spec1)] = 0
         spec, n = BattleComputer((spec0, num), (spec1, n1)
                                  ).compute_one_battle_result()
         # print('WINNNNNNNNNNER', spec, n)
+>>>>>>> master
         if n > 0:
             # there is survivors
             mfin = new_map._get_species_map(spec)

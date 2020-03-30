@@ -13,6 +13,7 @@ from boutchou.tkinter_ai import TkinterHumanAI
 __all__ = [
     'AbstractAI',
     'AbstractSafeAI',
+    'AlphaBetaAI',
     'Boutchou',
     'RandomAI',
     'RushToHumansAI',
