@@ -15,7 +15,7 @@ If `MapViewer().set_visible(True)`, an alternative visualizer will show the batt
 if __name__ == '__main__':
 
     # Launch server
-    MapViewer().set_visible(False)
+    MapViewer().set_visible(True)
     game_master = GameMasterWorker(
         nb_players=2, max_rounds=100, max_nb_games=2, auto_restart=0)
     game_master.start()
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     player1 = Thread(target=GameManager(
         player_name="Boutchou", ai_class=Boutchou).start)
     player2 = Thread(target=GameManager(
-        player_name="Boss", ai_class=MoveToHumanOrMoveToOpponentIfBetter).start)
+        player_name="Boss", ai_class=AlphaBetaAI).start)
     player1.start()
     player2.start()
     MapViewer().mainloop()

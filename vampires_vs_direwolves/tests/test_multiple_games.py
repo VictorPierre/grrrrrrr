@@ -51,7 +51,7 @@ class GameComparator:
 
 def multiple_games():
     # Configure your tests here:
-    ais = [AlphaBetaAI, AlphaBetaSimple]
+    ais = [AlphaBetaAI, ExpertAI]
     print(os.getcwd())
     map_paths = ["tests/test_maps/" + ele for ele in os.listdir("tests/test_maps") if ele.endswith(".xml")]
     game_comparator = GameComparator(ais, map_paths)

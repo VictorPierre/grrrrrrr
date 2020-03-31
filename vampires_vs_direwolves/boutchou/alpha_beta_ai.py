@@ -21,7 +21,7 @@ class AlphaBetaAI(AbstractAI):
         self.search = AlphaBetaSearch(
             possible_moves_computer=SimpleMoveComputer,
             heuristic=NumberAndDistanceHeuristic,
-            depth=7,
+            depth=5,
         )
 
     def generate_move(self):
