@@ -1,6 +1,6 @@
-from alphabeta.abstract_heuristic import NumberAndDistanceHeuristic
 from alphabeta.abstract_possible_moves_computer import SimpleMoveComputer
 from alphabeta.alphabeta import AlphaBetaSearch
+from alphabeta.num_dist_heur import NumberAndDistanceHeuristic
 from alphabeta.simple_heuristics import (ExpectationHeuristic,
                                          SpeciesRatioHeuristic)
 from boutchou.abstract_ai import AbstractAI

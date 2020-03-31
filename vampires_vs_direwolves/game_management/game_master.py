@@ -240,8 +240,15 @@ class GameMasterWorker(AbstractWorker):
             if has_won is not Species.NONE:
                 break
 
+        if has_won == Species.NONE:
+            winner_name = "none"
+        elif self._players[player_connection_1]["species"] == has_won:
+            winner_name = self._players[player_connection_1]["name"]
+        else:
+            winner_name = self._players[player_connection_2]["name"]
+
         logger.info(
-            f"Game #{len(self._game_monitor)} ended. Winning species: {has_won.name}")
+            f"Game #{len(self._game_monitor)} ended. Winning species: {has_won.name} ({winner_name})")
         self._game_monitor.append(winning_species=self._get_name_from_species(has_won),
                                   starting_species=self._starting_species,
                                   nb_rounds=nb_round)
