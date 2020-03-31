@@ -28,7 +28,13 @@ class RulesSequence(AbstractSafeAI):
             if new_position is not None:
                 break
 
-        return [(*old_position, number, *new_position)] if new_position else None
+        if not(new_position):
+            return None
+        elif type(new_position)==tuple:
+            return [(*old_position, number, *new_position)]
+        else: ##case of a method that can split
+            return [(*old_position, n, *position) for position, n in new_position] 
+
 
     def _generate_move(self):
         forbidden_moves_start = set()
