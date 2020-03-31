@@ -1,3 +1,5 @@
+import numpy as np
+
 from alphabeta.abstract_possible_moves_computer import SimpleMoveComputer
 from alphabeta.alphabeta import AlphaBetaSearch
 from alphabeta.diag_move_computer import DiagMoveComputer
