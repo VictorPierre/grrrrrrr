@@ -2,7 +2,13 @@
 # using Python 3.6+
 import sys
 
-from boutchou.human_ai import AlphaBetaAI, HumanAi
+from game_management.game_manager import GameManager
+from boutchou import Boutchou, HumanAI
+
+"""
+Main script, ready for a tournament.
+`--human` argument is for tests only (battle against a human in an alternative web GUI)
+"""
 
 user_args = sys.argv[1:]
 human = False
@@ -32,10 +38,8 @@ else:
 
 
 def main():
-    from game_management.game_manager import GameManager
-    hum = HumanAi
-    game_manager = GameManager(server_config=server_config, ai_class=AlphaBetaAI) if not human \
-        else GameManager(server_config=None, ai_class=hum)
+    game_manager = GameManager(server_config=server_config, ai_class=Boutchou) if not human \
+        else GameManager(server_config=None, ai_class=HumanAI)
     game_manager.start()
 
     print("End of program")

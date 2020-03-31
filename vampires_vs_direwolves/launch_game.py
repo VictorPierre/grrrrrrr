@@ -2,11 +2,15 @@ from threading import Thread
 from time import sleep
 
 from boutchou import *
-from boutchou.alpha_beta_ai import AlphaBetaAI
 from common.logger import logger
 from game_management.game_manager import GameManager
 from game_management.game_master import GameMasterWorker
 from game_management.map_viewer import MapViewer
+
+"""
+Script to launch a battle between two AIs with the alternative game master.
+If `MapViewer().set_visible(True)`, an alternative visualizer will show the battle.
+"""
 
 if __name__ == '__main__':
 
@@ -19,9 +23,9 @@ if __name__ == '__main__':
 
     # Create players
     player1 = Thread(target=GameManager(
-        player_name="Boutchou", ai_class=AlphaBetaAI).start)
+        player_name="Boutchou", ai_class=Boutchou).start)
     player2 = Thread(target=GameManager(
-        player_name="Boss", ai_class=RandomAI).start)
+        player_name="Boss", ai_class=MoveToHumanOrMoveToOpponentIfBetter).start)
     player1.start()
     player2.start()
     MapViewer().mainloop()
