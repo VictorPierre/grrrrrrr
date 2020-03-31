@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from boutchou.abstract_ai import AbstractAI, AbstractSafeAI
-from boutchou.alpha_beta_ai import (AlphaBetaAI, AlphaBetaExpectation, AlphaBetaSimple)
+from boutchou.alpha_beta_ai import (AlphaBetaAI, AlphaBetaDiag,
+                                    AlphaBetaExpectation, AlphaBetaObj,
+                                    AlphaBetaSimple)
 from boutchou.boutchou_ai import Boutchou
 from boutchou.human_ai import HumanAI
 from boutchou.multi_split_ai import MultiSplitAI
@@ -27,4 +29,6 @@ __all__ = [
     'AlphaBetaAI',
     'AlphaBetaSimple',
     'AlphaBetaExpectation',
+    'AlphaBetaDiag',
+    'AlphaBetaObj',
 ]
