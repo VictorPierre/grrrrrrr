@@ -142,7 +142,7 @@ class NextMoveRule(AbstractMoveRules):
         humans = get_distances_to_a_species(position, self._game_map, species=Species.HUMAN)
 
         ##search humans that are not reachable for the opponent
-        accessible_humans = list(humans.keys()) ##TO DO
+        accessible_humans = list(humans.keys()) ##TO BE IMPROVED
 
         ##list subsets that are reachable (inferiory)
         possible_humans_subset = self._list_subsets(accessible_humans)
@@ -160,7 +160,6 @@ class NextMoveRule(AbstractMoveRules):
             new_position = get_next_move_to_destination(position, target)
             moves.append((new_position,n))
         
-        
         if len(moves)>0:
             ##assign the rest of ressources to the forst group
             moves[0]=(moves[0][0],moves[0][1]+ressources_to_dispach%len(target_humans))
@@ -168,7 +167,17 @@ class NextMoveRule(AbstractMoveRules):
         return None
 
     def move_to_friends(self, position,**params):
-        return None
+        friends = get_distances_to_a_species(position, self._game_map,
+                                               species=self._species)
+        sorted_friends = sorted(friends, key=lambda x: friends[x][1], reverse=False)
+        if not sorted_friends or len(sorted_friends)<2:
+            logger.error(f"No more friends alive ({self._species})!")
+            return None
+        new_pos = get_next_move_to_destination(position, sorted_friends[1])  
+        if new_pos not in self._possible_moves.get_possible_moves_without_overcrowded_houses(position):
+            return None
+        return new_pos
+
 
     def _get_accessible_positions(self, position_attacker, position_enemy):
         """Get accessible positions of enemy if chased by attacker. It's position_attacker turn."""

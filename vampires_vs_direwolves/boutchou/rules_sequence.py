@@ -5,7 +5,7 @@ from boutchou import AbstractSafeAI
 from boutchou.rules import NextMoveRule
 from game_management.map_helpers import get_first_species_position_and_number
 
-WAIT_TIME = 1 * 0.11  # in seconds
+WAIT_TIME = 10 * 0.11  # in seconds
 
 
 class RulesSequence(AbstractSafeAI):
