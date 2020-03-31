@@ -3,7 +3,7 @@ from threading import Thread
 from typing import List, Type
 import os
 
-from vampires_vs_direwolves.common.logger import logger
+from common.logger import logger
 from boutchou import *
 from game_management.game_manager import GameManager
 from game_management.game_master import GameMasterWorker

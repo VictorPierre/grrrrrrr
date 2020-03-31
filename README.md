@@ -41,7 +41,8 @@ If host ip and port are not specified, default values in
 │   │   ├── battle_computer.py                     
 │   ├── boutchou/                                  <== Package des IA, nom de code: boutchou
 │   │   ├── __init__.py                            
-│   │   ├── abstract_ai.py                         
+│   │   ├── abstract_ai.py            
+│   │   ├── almost_expert_ai.py                    <-- IA utilisant des règles simples             
 │   │   ├── alpha_beta_ai.py                       <-- IA implémentant l'algorithme Alpha-Beta
 │   │   ├── boutchou_ai.py                         <-- IA finale
 │   │   ├── human_ai.py                            <-- Jeu par un humain sur l'interface web
