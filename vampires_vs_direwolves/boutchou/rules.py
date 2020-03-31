@@ -1,4 +1,4 @@
-from random import randint
+from random import randint, shuffle
 from typing import Tuple, List
 
 from common.logger import logger
@@ -100,6 +100,75 @@ class NextMoveRule(AbstractMoveRules):
         if new_pos not in self._possible_moves.get_possible_moves_without_overcrowded_houses(position):
             return None
         return new_pos
+
+    def escape_direct_threat(self, position, **params):
+        ##TO FIX: tendance à se faire piéger sur les bords
+    
+        own_number = self._game_map.get_cell_species_count(position, self._species)
+        opponents = get_distances_to_a_species(position, self._game_map, species=Species.get_opposite_species(self._species))
+        ##direct threats are opponents that are at a distance of 1 and more than 1.5x the own_number
+        direct_threats = list(filter(lambda x: opponents[x][1]==1 & opponents[x][2]>=1.5*own_number, opponents))
+
+        if len(direct_threats)==0:
+            return None
+        else:
+            possible_moves = self._game_map.get_possible_moves(position, force_move=True)
+            ##test all possible moves, and chose the first one that is safe
+            for move in shuffle(possible_moves):
+                if move not in direct_threats:
+                    opponents = get_distances_to_a_species(move, self._game_map, species=Species.get_opposite_species(self._species))
+                    new_threats = list(filter(lambda x: opponents[x][1]<=1 & opponents[x][2]>=0.5*own_number, opponents))
+                    if len(new_threats)==0:
+                        return move
+
+    ##helper
+    def _list_subsets(self, seq):
+        p = []
+        i, imax = 0, 2**len(seq)-1
+        while i <= imax:
+            s = []
+            j, jmax = 0, len(seq)-1
+            while j <= jmax:
+                if (i>>j)&1 == 1:
+                    s.append(seq[j])
+                j += 1
+            p.append(s)
+            i += 1 
+        return p
+
+    def move_to_humans_with_split(self, position, **params):
+        own_number = self._game_map.get_cell_species_count(position, self._species)
+        opponents = get_distances_to_a_species(position, self._game_map, species=Species.get_opposite_species(self._species))
+        humans = get_distances_to_a_species(position, self._game_map, species=Species.HUMAN)
+
+        ##search humans that are not reachable for the opponent
+        accessible_humans = list(humans.keys()) ##TO DO
+
+        ##list subsets that are reachable (inferiory)
+        possible_humans_subset = self._list_subsets(accessible_humans)
+        possible_humans_subset = list(filter(lambda subset: len(subset)+sum([humans[key][2] for key in subset])<=own_number, possible_humans_subset))
+
+        ##chose the best split strategy
+        target_humans = max(possible_humans_subset, key=lambda subset: sum([humans[key][2]/humans[key][1] for key in subset]))
+
+        ##generate moves toward the target humans, and repart all ressources
+        moves = []
+        ressources_to_dispach = own_number-len(target_humans)-sum([humans[key][2] for key in target_humans])
+
+        for target in target_humans:
+            n = humans[target][2]+1+ressources_to_dispach//len(target_humans)
+            new_position = get_next_move_to_destination(position, target)
+            moves.append((new_position,n))
+        
+        
+        if len(moves)>0:
+            ##assign the rest of ressources to the forst group
+            moves[0]=(moves[0][0],moves[0][1]+ressources_to_dispach%len(target_humans))
+            return moves
+        return None
+
+    def move_to_friends(self, position,**params):
+        return None
 
     def _get_accessible_positions(self, position_attacker, position_enemy):
         """Get accessible positions of enemy if chased by attacker. It's position_attacker turn."""

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from boutchou.abstract_ai import AbstractAI, AbstractSafeAI
+from boutchou.almost_expert_ai import AlmostExpertAI
 from boutchou.alpha_beta_ai import (AlphaBetaAI, AlphaBetaExpectation, AlphaBetaSimple)
 from boutchou.boutchou_ai import Boutchou
 from boutchou.human_ai import HumanAI
@@ -14,6 +15,7 @@ __all__ = [
     'AbstractAI',
     'AbstractSafeAI',
     'AlphaBetaAI',
+    'AlmostExpertAI',
     'Boutchou',
     'RandomAI',
     'RushToHumansAI',

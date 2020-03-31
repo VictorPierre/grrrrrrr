@@ -11,7 +11,7 @@ from game_management.map_viewer import MapViewer
 if __name__ == '__main__':
 
     # Launch server
-    MapViewer().set_visible(False)
+    MapViewer().set_visible(True)
     game_master = GameMasterWorker(
         nb_players=2, max_rounds=100, max_nb_games=2, auto_restart=0)
     game_master.start()
@@ -19,9 +19,9 @@ if __name__ == '__main__':
 
     # Create players
     player1 = Thread(target=GameManager(
-        player_name="Boutchou", ai_class=AlphaBetaAI).start)
+        player_name="Boutchou", ai_class=RushToHumansAI).start)
     player2 = Thread(target=GameManager(
-        player_name="Boss", ai_class=RandomAI).start)
+        player_name="BetaAI", ai_class=AlmostExpertAI).start)
     player1.start()
     player2.start()
     MapViewer().mainloop()
