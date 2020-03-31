@@ -33,10 +33,16 @@ class AlphaBetaSearch:
             'mv': None
         }
 
+        self.explored_nodes = 0
+        self.alpha_pruned = 0
+        self.beta_pruned = 0
+
         score, path = self.minmax_alpha_beta(start_node, -1e6 - 1, 1e6 + 1)
         #print('PATHHHHH', path)
         move = path[0]['mv']
-        return [move], score
+        print(
+            f'ALPHABETA, explored nodes : {self.explored_nodes}, alpha {self.alpha_pruned}, beta {self.beta_pruned}')
+        return [move], score, self.explored_nodes, self.alpha_pruned, self.beta_pruned
 
     def is_leaf(self, node, depth):
         over = node['board'].game_over()[0]
@@ -49,6 +55,7 @@ class AlphaBetaSearch:
             where path is a sequence of nodes that results in the value
         """
         best = []
+        self.explored_nodes += 1
         if self.is_leaf(node, depth):
             val = self.heuristic.evaluate(node['board'], self.specie)
             return val, [node]
@@ -65,6 +72,7 @@ class AlphaBetaSearch:
                 score, path = self.minmax_alpha_beta(
                     child, alpha, beta, depth+1)
                 if score >= beta:  # beta pruning
+                    self.beta_pruned += 1
                     b = [child] + path
                     return score, b
                 if score > alpha:
@@ -85,6 +93,7 @@ class AlphaBetaSearch:
                 score, path = self.minmax_alpha_beta(
                     child, alpha, beta, depth+1)
                 if score <= alpha:  # alpha pruning
+                    self.alpha_pruned += 1
                     b = [child] + path
                     return score, b
                 if score < beta:
