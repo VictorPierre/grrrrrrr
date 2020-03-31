@@ -9,7 +9,7 @@ but on linux distribution, it is more likely to be
 To install package requirements, run the following command lines:
 ```
 cd vampires_vs_direwolves
-python -m pip install -r requirements.txt
+python -m pip install -r requirements.txt ou conda install –yes –file requirements.txt 
 ```
 
 ## How to run grrrrrrr with its terrible AI Boutchou ?
@@ -72,7 +72,7 @@ If host ip and port are not specified, default values in
 │   │   └── server_game_map.py                     
 │   ├── server_connection/                         <== Serveur client
 │   │   ├── client.py                              
-│   │   ├── config_connection.py                   <-- Configuration des adresse et port par défaut  
+│   │   ├── config_connection.py                   <-- Configuration des adresses et ports par défaut  
 │   │   ├── game_server.py                         <-- Serveur de jeu alternatif (multi-plateforme)
 │   │   └── server_models.py                       
 │   ├── tests/                                     <== Tests
