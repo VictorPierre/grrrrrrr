@@ -9,7 +9,7 @@ but on linux distribution, it is more likely to be
 To install package requirements, run the following command lines:
 ```
 cd vampires_vs_direwolves
-python -m pip install -r requirements.txt ou conda install –yes –file requirements.txt 
+python -m pip install -r requirements.txt ou conda install -–yes -–file requirements.txt 
 ```
 
 ## How to run grrrrrrr with its terrible AI Boutchou ?
